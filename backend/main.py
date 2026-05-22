@@ -101,7 +101,7 @@ app.add_middleware(
 # =========================================
 # DATABASE
 # =========================================
-DATABASE_URL = "postgresql://default:p0o9i8u7y6@postgresql.oriontacita.my.id:4450/default"
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 engine = create_engine(
     DATABASE_URL,
