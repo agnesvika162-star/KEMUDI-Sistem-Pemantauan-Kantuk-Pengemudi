@@ -2,3 +2,4 @@
 backend/model/*
 backend/.venv/*
 backend/__pycache__/*
+*/node_modules/**

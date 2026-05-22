@@ -8,15 +8,13 @@ from fastapi import (
     Depends,
     HTTPException
 )
-#from dotenv import load_dotenv
-#import os
+from dotenv import load_dotenv
+import os
 
-#load_dotenv()
+load_dotenv()
 
-#FRONTEND_URL = os.getenv("FRONTEND_URL")
-#BACKEND_URL = os.getenv("BACKEND_URL")
-#print(FRONTEND_URL)
-#print(BACKEND_URL)
+MODEL_NAME = os.getenv("MODEL")
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.cors import CORSMiddleware
@@ -340,7 +338,7 @@ class LoginRequest(BaseModel):
 # =========================================
 # LOAD AI MODEL
 # =========================================
-model = load_model("model\eye_model_22mei.keras")
+model = load_model(MODEL_NAME)
 
 IMG_SIZE=(96,96)
 
@@ -1089,7 +1087,7 @@ def predict_drowsiness(img):
 
             round(
                 float(avg_score),
-                4
+                4``
             )
         }
 
