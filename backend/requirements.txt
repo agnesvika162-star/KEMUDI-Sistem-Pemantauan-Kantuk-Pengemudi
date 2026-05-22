@@ -11,3 +11,4 @@ passlib[bcrypt]
 bcrypt
 python-jose
 email-validator
+mediapipe==0.10.14

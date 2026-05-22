@@ -60,6 +60,7 @@ import shutil
 import os
 from uuid import uuid4
 from fastapi.staticfiles import StaticFiles
+import mediapipe as mp
 
 # =========================================
 # HIDE TENSORFLOW WARNING
@@ -340,6 +341,79 @@ class LoginRequest(BaseModel):
 # LOAD AI MODEL
 # =========================================
 model = load_model("model\eye_model_22mei.keras")
+
+IMG_SIZE=(96,96)
+
+THRESHOLD=0.5
+
+# =========================================
+# MEDIAPIPE
+# =========================================
+
+mp_face=mp.solutions.face_mesh
+
+face_mesh=mp_face.FaceMesh(
+
+    static_image_mode=True,
+
+    max_num_faces=1,
+
+    refine_landmarks=True,
+
+    min_detection_confidence=0.5
+)
+
+
+LEFT_EYE=[33,133,160,159,158,157,173]
+
+RIGHT_EYE=[362,263,387,386,385,384,398]
+
+# =========================================
+# EYE BOUNDING BOX
+# =========================================
+
+def get_eye_box(
+
+    landmarks,
+    eye_indices,
+    w,
+    h
+
+):
+
+    xs=[]
+
+    ys=[]
+
+    for idx in eye_indices:
+
+        lm=landmarks[idx]
+
+        xs.append(
+
+            int(
+                lm.x*w
+            )
+        )
+
+        ys.append(
+
+            int(
+                lm.y*h
+            )
+        )
+
+    return (
+
+        min(xs)-5,
+
+        min(ys)-5,
+
+        max(xs)+5,
+
+        max(ys)+5
+
+    )
 
 # =========================================
 # GLOBAL STATUS
@@ -668,76 +742,6 @@ def profile_activity_summary(
             detail=str(e)
         )
     
-# # =========================================
-# # AI PREDICT
-# # =========================================
-# def predict_drowsiness(img):
-
-#     global last_status
-
-#     # =====================================
-#     # PREPROCESS
-#     # =====================================
-#     # img = cv2.resize(
-#     #     img,
-#     #     (64, 64)
-#     # )
-
-#     img = cv2.resize(
-#     img,
-#     (96, 96)
-#     )
-
-#     img = cv2.cvtColor(
-#         img,
-#         cv2.COLOR_BGR2GRAY
-#     )
-
-#     img = img.astype("float32") / 255.0
-
-#     img = np.expand_dims(
-#         img,
-#         axis=-1
-#     )
-
-#     img = np.expand_dims(
-#         img,
-#         axis=0
-#     )
-
-#     print("INPUT SHAPE:", img.shape)
-
-#     # =====================================
-#     # PREDICT
-#     # =====================================
-#     prediction = model.predict(
-#         img,
-#         verbose=0
-#     )
-
-#     print("RAW PREDICTION:", prediction)
-
-#     value = float(prediction[0][0])
-
-#     print("RAW VALUE:", value)
-
-#     # =====================================
-#     # STATUS
-#     # =====================================
-#     if value >= 0.80:
-
-#         status = "AWAKE"
-
-#     elif value <= 0.20:
-
-#         status = "DROWSY"
-
-#     else:
-
-#         status = last_status
-
-#     last_status = status
-
 
 # =========================================
 # LAST STATUS
@@ -747,140 +751,372 @@ last_status = "AWAKE"
 # =========================================
 # AI PREDICT
 # =========================================
+# def predict_drowsiness(img):
+
+#     global last_status
+
+#     try:
+
+#         # =====================================
+#         # RESIZE
+#         # =====================================
+#         img = cv2.resize(
+#             img,
+#             (96, 96)
+#         )
+
+#         # =====================================
+#         # GRAYSCALE
+#         # =====================================
+#         img = cv2.cvtColor(
+#             img,
+#             cv2.COLOR_BGR2GRAY
+#         )
+
+#         # =====================================
+#         # NORMALIZE
+#         # =====================================
+#         img = img.astype("float32") / 255.0
+
+#         # =====================================
+#         # RESHAPE
+#         # =====================================
+#         img = np.expand_dims(
+#             img,
+#             axis=-1
+#         )
+
+#         img = np.expand_dims(
+#             img,
+#             axis=0
+#         )
+
+#         print(
+#             "INPUT SHAPE:",
+#             img.shape
+#         )
+
+#         # =====================================
+#         # PREDICT
+#         # =====================================
+#         prediction = model.predict(
+#             img,
+#             verbose=0
+#         )
+
+#         print(
+#             "RAW PREDICTION:",
+#             prediction
+#         )
+
+#         value = float(
+#             prediction[0][0]
+#         )
+
+#         print(
+#             "RAW VALUE:",
+#             value
+#         )
+
+#         # =====================================
+#         # STATUS
+#         # =====================================
+#         # MODEL BARU:
+#         # 1 = AWAKE
+#         # 0 = DROWSY
+#         # =====================================
+
+#         if value >= 0.50:
+
+#             status = "AWAKE"
+
+#         else:
+
+#             status = "DROWSY"
+#         print("STATUS:", status)
+#         # =====================================
+#         # SAVE LAST STATUS
+#         # =====================================
+#         last_status = status
+
+#         # =====================================
+#         # RETURN
+#         # =====================================
+#         return {
+
+#             "status": status,
+
+#             "confidence": round(
+#                 value * 100,
+#                 2
+#             )
+#         }
+
+#     except Exception as e:
+
+#         print(
+#             "PREDICT ERROR:",
+#             e
+#         )
+
+#         return {
+
+#             "status": last_status,
+
+#             "confidence": 0
+#         }
+#     # =====================================
+#     # CONFIDENCE
+#     # =====================================
+#     confidence = max(
+#         value,
+#         1 - value
+#     ) * 100
+
+#     result = {
+
+#         "status": status,
+
+#         "confidence": round(confidence, 2),
+
+#         "value": round(value, 4)
+#     }
+
+#     print("AI RESULT:", result)
+
+#     return result
+
 def predict_drowsiness(img):
 
     global last_status
 
     try:
 
-        # =====================================
-        # RESIZE
-        # =====================================
-        img = cv2.resize(
+        h,w,_=img.shape
+
+
+        rgb=cv2.cvtColor(
+
             img,
-            (96, 96)
+            cv2.COLOR_BGR2RGB
         )
 
-        # =====================================
-        # GRAYSCALE
-        # =====================================
-        img = cv2.cvtColor(
-            img,
-            cv2.COLOR_BGR2GRAY
+
+        results=face_mesh.process(
+            rgb
         )
 
-        # =====================================
-        # NORMALIZE
-        # =====================================
-        img = img.astype("float32") / 255.0
 
-        # =====================================
-        # RESHAPE
-        # =====================================
-        img = np.expand_dims(
-            img,
-            axis=-1
+        if not results.multi_face_landmarks:
+
+            return {
+
+                "status":"NO_EYE",
+
+                "confidence":0
+            }
+
+
+        scores=[]
+
+
+        face_landmarks=(
+            results.multi_face_landmarks[0]
         )
 
-        img = np.expand_dims(
-            img,
-            axis=0
+
+        lm=face_landmarks.landmark
+
+
+        boxes=[
+
+            get_eye_box(
+
+                lm,
+
+                LEFT_EYE,
+
+                w,
+
+                h
+
+            ),
+
+            get_eye_box(
+
+                lm,
+
+                RIGHT_EYE,
+
+                w,
+
+                h
+            )
+
+        ]
+
+
+        for (
+
+            x1,
+            y1,
+            x2,
+            y2
+
+        ) in boxes:
+
+
+            x1=max(x1,0)
+
+            y1=max(y1,0)
+
+            x2=min(x2,w)
+
+            y2=min(y2,h)
+
+
+            eye=img[
+                y1:y2,
+                x1:x2
+            ]
+
+
+            if eye.size==0:
+
+                continue
+
+
+            gray=cv2.cvtColor(
+
+                eye,
+
+                cv2.COLOR_BGR2GRAY
+            )
+
+
+            eye=cv2.resize(
+
+                gray,
+
+                IMG_SIZE
+            )
+
+
+            eye=eye.astype(
+                "float32"
+            )/255.0
+
+
+            eye=np.expand_dims(
+
+                eye,
+
+                axis=(0,-1)
+            )
+
+
+            score=float(
+
+                model.predict(
+
+                    eye,
+
+                    verbose=0
+
+                )[0][0]
+            )
+
+
+            scores.append(
+                score
+            )
+
+
+        if len(scores)==0:
+
+            return {
+
+                "status":"NO_EYE",
+
+                "confidence":0
+            }
+
+
+        avg_score=np.mean(
+            scores
         )
 
-        print(
-            "INPUT SHAPE:",
-            img.shape
+
+        status=(
+
+            "AWAKE"
+
+            if avg_score>
+
+            THRESHOLD
+
+            else
+
+            "DROWSY"
+
         )
 
-        # =====================================
-        # PREDICT
-        # =====================================
-        prediction = model.predict(
-            img,
-            verbose=0
-        )
 
-        print(
-            "RAW PREDICTION:",
-            prediction
-        )
+        confidence=max(
 
-        value = float(
-            prediction[0][0]
-        )
+            avg_score,
 
-        print(
-            "RAW VALUE:",
-            value
-        )
+            1-avg_score
 
-        # =====================================
-        # STATUS
-        # =====================================
-        # MODEL BARU:
-        # 1 = AWAKE
-        # 0 = DROWSY
-        # =====================================
+        )*100
 
-        if value >= 0.50:
 
-            status = "AWAKE"
+        last_status=status
 
-        else:
 
-            status = "DROWSY"
-        print("STATUS:", status)
-        # =====================================
-        # SAVE LAST STATUS
-        # =====================================
-        last_status = status
+        result={
 
-        # =====================================
-        # RETURN
-        # =====================================
-        return {
+            "status":status,
 
-            "status": status,
+            "confidence":
 
-            "confidence": round(
-                value * 100,
+            round(
+                float(confidence),
                 2
+            ),
+
+            "value":
+
+            round(
+                float(avg_score),
+                4
             )
         }
+
+
+        print(
+            "AI RESULT:",
+            result
+        )
+
+
+        return result
+
 
     except Exception as e:
 
         print(
+
             "PREDICT ERROR:",
             e
         )
 
         return {
 
-            "status": last_status,
+            "status":last_status,
 
-            "confidence": 0
+            "confidence":0
         }
-    # =====================================
-    # CONFIDENCE
-    # =====================================
-    confidence = max(
-        value,
-        1 - value
-    ) * 100
-
-    result = {
-
-        "status": status,
-
-        "confidence": round(confidence, 2),
-
-        "value": round(value, 4)
-    }
-
-    print("AI RESULT:", result)
-
-    return result
 
 # =========================================
 # PREDICT API
