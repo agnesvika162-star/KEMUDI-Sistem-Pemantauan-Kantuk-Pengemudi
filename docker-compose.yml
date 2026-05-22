@@ -1,0 +1,12 @@
+services:
+  backend:
+    build: ./backend
+    container_name: sistem-kemudi-backend
+    ports:
+      - "7700:7700"
+    networks:
+      - sistem-kemudi-network
+
+networks:
+  sistem-kemudi-network:
+    driver: bridge
