@@ -49,7 +49,7 @@ useEffect(() => {
     try {
 
       const response = await fetch(
-        "http://localhost:8000/profile"
+        `${import.meta.env.VITE_API_URL}/profile`
       );
 
       const data =
@@ -84,7 +84,7 @@ useEffect(() => {
   if (isLogin === null) return null;
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen overflow-x-hidden bg-[#F5F7FB]">
       {/* 🔥 NAVBAR */}
       {isLogin && (
         <Navbar
@@ -98,7 +98,7 @@ useEffect(() => {
       )}
 
       {/* CONTENT */}
-      <main className="flex-1 p-4">
+      <main className="flex-1 p-2 md:p-4">
         <Routes>
           {/* 🔐 BELUM LOGIN */}
           {!isLogin ? (

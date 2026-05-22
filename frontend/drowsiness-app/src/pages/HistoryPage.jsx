@@ -11,7 +11,7 @@ export default function HistoryPage() {
   // FETCH DATA
   useEffect(() => {
 
-    fetch("http://localhost:8000/dashboard-history")
+    fetch("${import.meta.env.VITE_API_URL}/dashboard-history")
 
       .then((res) => res.json())
 

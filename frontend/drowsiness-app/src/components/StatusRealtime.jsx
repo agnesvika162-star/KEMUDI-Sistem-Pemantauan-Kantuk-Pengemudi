@@ -42,7 +42,7 @@ export default function StatusRealtime({
 
       {/* RIGHT */}
       <div className="flex items-center gap-2 text-gray-500 text-sm">
-         <span>Update: {lastUpdate}</span>
+        <span>Update: {lastUpdate}</span>
       </div>
     </div>
   );

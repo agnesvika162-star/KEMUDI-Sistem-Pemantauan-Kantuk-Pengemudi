@@ -27,13 +27,13 @@ export default function RegisterInput({ onRegister, loading = false }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4 md:space-y-5">
 
       {/* NAMA */}
       <input
         type="text"
         placeholder="Nama Lengkap"
-        className="w-full border p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="w-full border rounded-xl p-3 md:p-4 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
         value={name}
         onChange={(e) => setName(e.target.value)}
         required
@@ -43,7 +43,7 @@ export default function RegisterInput({ onRegister, loading = false }) {
       <input
         type="email"
         placeholder="Email"
-        className="w-full border p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="w-full border rounded-xl p-3 md:p-4 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         required
@@ -53,7 +53,7 @@ export default function RegisterInput({ onRegister, loading = false }) {
       <input
         type="password"
         placeholder="Password"
-        className="w-full border p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="w-full border rounded-xl p-3 md:p-4 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         required
@@ -63,7 +63,7 @@ export default function RegisterInput({ onRegister, loading = false }) {
       <input
         type="password"
         placeholder="Konfirmasi Password"
-        className="w-full border p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="w-full border rounded-xl p-3 md:p-4 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
         value={confirm}
         onChange={(e) => setConfirm(e.target.value)}
         required
@@ -73,7 +73,7 @@ export default function RegisterInput({ onRegister, loading = false }) {
       <button
         type="submit"
         disabled={loading}
-        className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition disabled:bg-gray-400"
+        className="w-full bg-blue-600 hover:bg-blue-700 transition text-white py-3 md:py-4 rounded-xl font-semibold text-sm md:text-base disabled:bg-gray-400"
       >
         {loading ? "Loading..." : "Daftar"}
       </button>

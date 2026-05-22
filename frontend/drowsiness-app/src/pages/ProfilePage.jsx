@@ -38,7 +38,7 @@ const [activity, setActivity] =
     const fetchActivity = async () => {
       try {
         const response = await fetch(
-          "http://localhost:8000/profile/activity-summary",
+          `${import.meta.env.VITE_API_URL}/profile/activity-summary`
         );
 
         const data = await response.json();
@@ -94,7 +94,7 @@ localStorage.setItem(
 
       formData.append("photo", file);
 
-      await fetch("http://localhost:8000/upload-profile", {
+      await fetch(`${import.meta.env.VITE_API_URL}/upload-profile`, {
         method: "POST",
         body: formData,
       });
@@ -194,7 +194,7 @@ localStorage.setItem(
 
         formData.append("photo", blob, "camera-photo.png");
 
-        await fetch("http://localhost:8000/upload-profile", {
+        await fetch(`${import.meta.env.VITE_API_URL}/upload-profile`, {
           method: "POST",
           body: formData,
         });
@@ -212,7 +212,7 @@ useEffect(() => {
     try {
 
       const response = await fetch(
-        "http://localhost:8000/profile"
+        `${import.meta.env.VITE_API_URL}/profile`
       );
 
       const data =
@@ -246,9 +246,8 @@ useEffect(() => {
     try {
 
       const response = await fetch(
-        "http://localhost:8000/profile/activity-summary"
+        `${import.meta.env.VITE_API_URL}/profile/activity-summary`
       );
-
       const data =
         await response.json();
 
@@ -286,18 +285,18 @@ useEffect(() => {
 
   return (
     <div className="min-h-screen bg-[#F5F7FB]">
-      <div className="max-w-7xl mx-auto px-8 pt-36 pb-10">
+      <div className="max-w-7xl mx-auto px-4 md:px-8 pt-28 md:pt-36 pb-10">
         {/* HEADER */}
         <div className="mb-10">
-          <h1 className="text-5xl font-bold text-[#0F172A]">Profil Saya</h1>
+          <h1 className="text-3xl md:text-5xl font-bold text-[#0F172A]">Profil Saya</h1>
 
-          <p className="text-gray-500 mt-3 text-lg">
+          <p className="text-sm md:text-lg text-gray-500 mt-3">
             Dashboard &gt; Profil Saya
           </p>
         </div>
 
         {/* PROFILE CARD */}
-        <div className="bg-white rounded-3xl shadow-sm border p-10 flex items-center gap-16">
+        <div className="bg-white rounded-3xl shadow-sm border p-5 md:p-10 flex flex-col md:flex-row items-center gap-8 md:gap-16">
           {/* PHOTO */}
           <div className="relative flex flex-col items-center">
             {/* FOTO */}
@@ -305,12 +304,12 @@ useEffect(() => {
               <img
                 src={user.photo}
                 alt="profile"
-                className="w-44 h-44 rounded-full object-cover border-4 border-gray-100"
+                className="w-32 h-32 md:w-44 md:h-44 rounded-full object-cover border-4 border-gray-100"
               />
             ) : (
-              <div className="w-44 h-44 rounded-full bg-gray-100 flex items-center justify-center">
+              <div className="w-32 h-32 md:w-44 md:h-44 rounded-full bg-gray-100 flex items-center justify-center">
                 <CircleUserRound
-                  size={120}
+                  size={90}
                   className="text-[#5B2C83]"
                   strokeWidth={1.5}
                 />
@@ -320,7 +319,7 @@ useEffect(() => {
             {/* EDIT BUTTON */}
             <button
               onClick={() => setIsEditOpen((prev) => !prev)}
-              className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 px-6 py-2 rounded-full bg-white border shadow-md hover:bg-gray-50 font-medium transition flex items-center gap-2"
+              className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 px-4 md:px-6 py-2 text-sm md:text-base rounded-full bg-white border shadow-md hover:bg-gray-50 font-medium transition flex items-center gap-2"
             >
               📷 Edit
             </button>
@@ -365,20 +364,20 @@ useEffect(() => {
 
           {/* USER INFO */}
           <div>
-            <h2 className="text-5xl font-bold text-[#0F172A]">
+            <h2 className="text-2xl md:text-5xl font-bold text-[#0F172A] text-center md:text-left">
               {user?.name || "Nama User"}
             </h2>
 
-            <p className="text-2xl text-gray-500 mt-4">
+            <p className="text-base md:text-2xl text-gray-500 mt-2 md:mt-4 text-center md:text-left break-all">
               {user?.email || "email@gmail.com"}
             </p>
           </div>
         </div>
 
         {/* ACTIVITY CARD */}
-        <div className="bg-white rounded-3xl shadow-sm border p-8 mt-8">
+        <div className="bg-white rounded-3xl shadow-sm border p-5 md:p-8 mt-8">
           <div>
-            <h2 className="text-3xl font-bold text-[#0F172A]">
+            <h2 className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-6">
               Aktivitas 30 Hari Terakhir
             </h2>
 
@@ -391,22 +390,22 @@ useEffect(() => {
             {/* MONITORING */}
             <div className="flex items-center justify-between border-b pb-6">
               <div className="flex items-center gap-5">
-                <div className="w-16 h-16 rounded-full bg-blue-50 flex items-center justify-center text-3xl">
+                <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-blue-50 flex items-center justify-center text-3xl">
                   📅
                 </div>
 
                 <div>
-                  <h3 className="text-2xl font-semibold text-[#0F172A]">
+                  <h3 className="text-lg md:text-2xl font-semibold text-[#0F172A]">
                     Monitoring Terakhir
                   </h3>
 
-                  <p className="text-gray-500 text-lg mt-1">
+                  <p className="text-sm md:text-lg text-gray-500 mt-1">
                     Waktu terakhir sistem memantau aktivitas Anda.
                   </p>
                 </div>
               </div>
 
-              <p className="text-3xl font-bold text-[#0F172A]">
+              <p className="text-xl md:text-3xl font-bold text-[#0F172A]">
                 {activity.lastMonitoring}
               </p>
             </div>
@@ -458,7 +457,7 @@ useEffect(() => {
             </div>
           </div>
 
-          <div className="mt-10 bg-blue-50 rounded-2xl px-6 py-5 text-blue-600 text-lg">
+          <div className="mt-10 bg-blue-50 rounded-2xl px-4 md:px-6 py-4 md:py-5 text-blue-600 text-sm md:text-lg">
             ⓘ Data dihitung dari aktivitas Anda selama 30 hari terakhir.
           </div>
         </div>

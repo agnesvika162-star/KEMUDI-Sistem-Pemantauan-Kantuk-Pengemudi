@@ -47,13 +47,10 @@ function DashboardPage() {
 
       try {
 
-        await fetch(
-          "http://localhost:8000/update-data",
-          {
-            method: "POST",
-
-            headers: {
-              "Content-Type": "application/json",
+        await fetch(`${import.meta.env.VITE_API_URL}/update-summary`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
             },
 
             body: JSON.stringify({
@@ -84,7 +81,7 @@ function DashboardPage() {
   // =====================================
   useEffect(() => {
 
-    fetch("http://localhost:8000/dashboard-history")
+    fetch(`${import.meta.env.VITE_API_URL}/dashboard-history`)
 
       .then((res) => res.json())
 
@@ -146,12 +143,12 @@ function DashboardPage() {
     <div className="min-h-screen bg-[#F5F7FB] pt-24">
 
       {/* CONTAINER */}
-      <div className="max-w-7xl mx-auto px-6">
+      <div className="max-w-7xl mx-auto px-4 md:px-6">
 
         {/* TITLE */}
         <div className="mb-6">
 
-          <h1 className="text-3xl font-bold text-gray-800">
+          <h1 className="text-xl md:text-2xl font-bold text-gray-800 mb-6">
 
             Dashboard
 
@@ -163,9 +160,9 @@ function DashboardPage() {
         <ChartSection />
 
         {/* TABLE */}
-        <div className="bg-white rounded-2xl border p-6 shadow-sm mt-6">
+        <div className="bg-white rounded-2xl border p-4 md:p-6 shadow-sm mt-6">
 
-          <h1 className="text-2xl font-bold text-gray-800 mb-6">
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-6">
 
             Riwayat Perjalanan
 
@@ -173,13 +170,13 @@ function DashboardPage() {
 
           <div className="overflow-x-auto">
 
-            <table className="w-full">
+            <table className="w-full text-sm md:text-base">
 
               <thead>
 
                 <tr className="bg-[#F5F7FB] text-gray-700">
 
-                  <th className="py-4 rounded-l-xl">
+                  <th className="py-3 md:py-4 rounded-l-xl">
 
                     Tanggal
 
@@ -234,7 +231,7 @@ function DashboardPage() {
                     >
 
                       {/* TANGGAL */}
-                      <td className="py-5">
+                      <td className="py-3 md:py-5">
 
                         {item.tanggal}
 
@@ -257,7 +254,7 @@ function DashboardPage() {
                       <td>
 
                         <span
-                          className={`px-4 py-1 rounded-full text-sm font-semibold
+                          className={`px-3 md:px-4 py-1 rounded-full text-xs md:text-sm font-semibold
 
                           ${
                             item.status === "DROWSY"
@@ -286,9 +283,9 @@ function DashboardPage() {
           </div>
 
           {/* FOOTER */}
-          <div className="flex items-center justify-between mt-6">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mt-6">
 
-            <p className="text-gray-500">
+            <p className="text-sm md:text-base text-gray-500">
 
               Menampilkan {startIndex + 1}
 

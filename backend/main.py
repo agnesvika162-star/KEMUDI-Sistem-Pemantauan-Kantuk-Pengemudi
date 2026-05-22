@@ -8,7 +8,17 @@ from fastapi import (
     Depends,
     HTTPException
 )
+#from dotenv import load_dotenv
+#import os
 
+#load_dotenv()
+
+#FRONTEND_URL = os.getenv("FRONTEND_URL")
+#BACKEND_URL = os.getenv("BACKEND_URL")
+#print(FRONTEND_URL)
+#print(BACKEND_URL)
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 
 from fastapi.staticfiles import StaticFiles
@@ -76,10 +86,11 @@ app.mount(
 app.add_middleware(
     CORSMiddleware,
 
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-    ],
+    # allow_origins=[
+    #     FRONTEND_URL,
+    #     BACKEND_URL,
+    # ],
+    allow_origins=["*"],
 
     allow_credentials=True,
 
@@ -328,7 +339,7 @@ class LoginRequest(BaseModel):
 # =========================================
 # LOAD AI MODEL
 # =========================================
-model = load_model("eye_model1.keras")
+model = load_model("eyee_model1 (1).keras")
 
 # =========================================
 # GLOBAL STATUS
@@ -657,6 +668,82 @@ def profile_activity_summary(
             detail=str(e)
         )
     
+# # =========================================
+# # AI PREDICT
+# # =========================================
+# def predict_drowsiness(img):
+
+#     global last_status
+
+#     # =====================================
+#     # PREPROCESS
+#     # =====================================
+#     # img = cv2.resize(
+#     #     img,
+#     #     (64, 64)
+#     # )
+
+#     img = cv2.resize(
+#     img,
+#     (96, 96)
+#     )
+
+#     img = cv2.cvtColor(
+#         img,
+#         cv2.COLOR_BGR2GRAY
+#     )
+
+#     img = img.astype("float32") / 255.0
+
+#     img = np.expand_dims(
+#         img,
+#         axis=-1
+#     )
+
+#     img = np.expand_dims(
+#         img,
+#         axis=0
+#     )
+
+#     print("INPUT SHAPE:", img.shape)
+
+#     # =====================================
+#     # PREDICT
+#     # =====================================
+#     prediction = model.predict(
+#         img,
+#         verbose=0
+#     )
+
+#     print("RAW PREDICTION:", prediction)
+
+#     value = float(prediction[0][0])
+
+#     print("RAW VALUE:", value)
+
+#     # =====================================
+#     # STATUS
+#     # =====================================
+#     if value >= 0.80:
+
+#         status = "AWAKE"
+
+#     elif value <= 0.20:
+
+#         status = "DROWSY"
+
+#     else:
+
+#         status = last_status
+
+#     last_status = status
+
+
+# =========================================
+# LAST STATUS
+# =========================================
+last_status = "AWAKE"
+
 # =========================================
 # AI PREDICT
 # =========================================
@@ -664,64 +751,116 @@ def predict_drowsiness(img):
 
     global last_status
 
-    # =====================================
-    # PREPROCESS
-    # =====================================
-    img = cv2.resize(
-        img,
-        (64, 64)
-    )
+    try:
 
-    img = cv2.cvtColor(
-        img,
-        cv2.COLOR_BGR2GRAY
-    )
+        # =====================================
+        # RESIZE
+        # =====================================
+        img = cv2.resize(
+            img,
+            (96, 96)
+        )
 
-    img = img.astype("float32") / 255.0
+        # =====================================
+        # GRAYSCALE
+        # =====================================
+        img = cv2.cvtColor(
+            img,
+            cv2.COLOR_BGR2GRAY
+        )
 
-    img = np.expand_dims(
-        img,
-        axis=-1
-    )
+        # =====================================
+        # NORMALIZE
+        # =====================================
+        img = img.astype("float32") / 255.0
 
-    img = np.expand_dims(
-        img,
-        axis=0
-    )
+        # =====================================
+        # RESHAPE
+        # =====================================
+        img = np.expand_dims(
+            img,
+            axis=-1
+        )
 
-    print("INPUT SHAPE:", img.shape)
+        img = np.expand_dims(
+            img,
+            axis=0
+        )
 
-    # =====================================
-    # PREDICT
-    # =====================================
-    prediction = model.predict(
-        img,
-        verbose=0
-    )
+        print(
+            "INPUT SHAPE:",
+            img.shape
+        )
 
-    print("RAW PREDICTION:", prediction)
+        # =====================================
+        # PREDICT
+        # =====================================
+        prediction = model.predict(
+            img,
+            verbose=0
+        )
 
-    value = float(prediction[0][0])
+        print(
+            "RAW PREDICTION:",
+            prediction
+        )
 
-    print("RAW VALUE:", value)
+        value = float(
+            prediction[0][0]
+        )
 
-    # =====================================
-    # STATUS
-    # =====================================
-    if value >= 0.80:
+        print(
+            "RAW VALUE:",
+            value
+        )
 
-        status = "AWAKE"
+        # =====================================
+        # STATUS
+        # =====================================
+        # MODEL BARU:
+        # 1 = AWAKE
+        # 0 = DROWSY
+        # =====================================
 
-    elif value <= 0.20:
+        if value >= 0.50:
 
-        status = "DROWSY"
+            status = "AWAKE"
 
-    else:
+        else:
 
-        status = last_status
+            status = "DROWSY"
+        print("STATUS:", status)
+        # =====================================
+        # SAVE LAST STATUS
+        # =====================================
+        last_status = status
 
-    last_status = status
+        # =====================================
+        # RETURN
+        # =====================================
+        return {
 
+            "status": status,
+
+            "confidence": round(
+                value * 100,
+                2
+            )
+        }
+
+    except Exception as e:
+
+        print(
+            "PREDICT ERROR:",
+            e
+        )
+
+        return {
+
+            "status": last_status,
+
+            "confidence": 0
+        }
     # =====================================
     # CONFIDENCE
     # =====================================
@@ -830,11 +969,8 @@ async def update_summary(
     try:
 
         today = datetime.now().strftime("%d %b %Y")
-
         duration = data.get("duration", 0)
-
         drowsy_count = data.get("drowsy_count", 0)
-
         summary = db.query(DailySummary).filter(
             DailySummary.date == today
         ).first()

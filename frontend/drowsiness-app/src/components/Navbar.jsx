@@ -1,5 +1,3 @@
-
-
 ("use client");
 
 import { useState } from "react";
@@ -48,24 +46,24 @@ function Navbar({
 
   return (
     <div className="w-full bg-white border-b fixed top-0 left-0 z-50 shadow-sm">
-      <div className="max-w-7xl mx-auto px-8 py-5 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-4 md:px-8 py-3 md:py-4 flex items-center justify-between">
         {/* LEFT */}
         <div className="flex flex-col leading-tight">
-          <h1 className="text-4xl font-bold text-blue-600">KEMUDI</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-blue-600">KEMUDI</h1>
 
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-[9px] md:text-xs text-gray-500 mt-1">
             Sistem Pemantauan Kantuk Pengemudi
           </p>
         </div>
 
         {/* CENTER */}
         {!isAuthPage && location.pathname !== "/profile" && (
-          <div className="flex items-center gap-14">
+          <div className="hidden md:flex items-center gap-10 lg:gap-16">
             {/* LIVE DETECTION */}
             <NavLink
               to="/"
               className={({ isActive }) =>
-                `font-semibold pb-3 transition text-lg relative
+                `font-semibold pb-3 transition text-sm md:text-base lg:text-lg relative
                 ${
                   isActive
                     ? "text-blue-600"
@@ -77,7 +75,7 @@ function Navbar({
                 <>
                   Live Detection
                   {isActive && (
-                    <div className="absolute left-0 bottom-0 w-full h-1 bg-blue-500 rounded-full" />
+                    <div className="absolute left-0 bottom-0 w-full h-[3px] bg-blue-500 rounded-full" />
                   )}
                 </>
               )}
@@ -87,7 +85,7 @@ function Navbar({
             <NavLink
               to="/dashboard"
               className={({ isActive }) =>
-                `font-semibold pb-3 transition text-lg relative
+                `font-semibold pb-3 transition text-sm md:text-base lg:text-lg relative
                 ${
                   isActive
                     ? "text-blue-600"
@@ -99,7 +97,7 @@ function Navbar({
                 <>
                   Dashboard
                   {isActive && (
-                    <div className="absolute left-0 bottom-0 w-full h-1 bg-blue-500 rounded-full" />
+                    <div className="absolute left-0 bottom-0 w-full h-[3px] bg-blue-500 rounded-full" />
                   )}
                 </>
               )}
@@ -109,14 +107,14 @@ function Navbar({
 
         {/* RIGHT */}
         {!isAuthPage && (
-          <div className="flex items-center gap-5">
+          <div className="flex items-center gap-2 md:gap-4">
             {/* 🔥 LIVE PAGE ONLY */}
             {location.pathname === "/" && (
               <>
                 {/* CAMERA */}
                 <button
                   onClick={() => setIsCameraOn((prev) => !prev)}
-                  className={`flex items-center gap-2 px-5 py-2 rounded-full text-sm font-medium transition
+                  className={`flex items-center gap-2 px-3 md:px-5 py-2 rounded-full text-xs md:text-sm font-medium transition
 
                   ${
                     isCameraOn
@@ -150,7 +148,7 @@ function Navbar({
                 {/* ICON */}
                 <button
                   onClick={() => setIsProfileOpen((prev) => !prev)}
-                  className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden hover:bg-gray-200 transition"
+                  className="w-10 h-10 md:w-14 md:h-14 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden hover:bg-gray-200 transition"
                 >
                   {user?.photo ? (
                     <img
@@ -168,7 +166,7 @@ function Navbar({
 
                 {/* DROPDOWN */}
                 {isProfileOpen && (
-                  <div className="absolute right-0 mt-4 w-52 bg-white rounded-2xl shadow-xl border overflow-hidden">
+                  <div className="absolute right-0 mt-3 md:mt-4 w-44 md:w-52 bg-white rounded-2xl shadow-xl border overflow-hidden">
                     {/* DASHBOARD / PROFILE */}
                     <button
                       onClick={() => {

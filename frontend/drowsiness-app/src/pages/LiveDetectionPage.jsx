@@ -94,11 +94,11 @@ useEffect(() => {
   const isSevere = drowsinessLevel >= 50;
 
   return (
-    <div className="min-h-screen bg-[#F5F7FB] overflow-y-auto pb-10">
+    <div className="min-h-screen bg-[#F5F7FB] overflow-x-hidden overflow-y-auto pb-6 md:pb-10">
       {/* CONTENT */}
-      <div className="max-w-6xl mx-auto px-4 pt-28">
+      <div className="max-w-7xl mx-auto px-3 md:px-4 pt-24 md:pt-28">
         {/* CAMERA */}
-        <div className="w-full">
+        <div className="w-full overflow-hidden rounded-2xl">
           <CameraSection
             isCameraOn={isCameraOn}
             status={status}
@@ -111,7 +111,7 @@ useEffect(() => {
         </div>
 
         {/* BOTTOM SECTION */}
-        <div className="grid md:grid-cols-2 gap-4 mt-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mt-6">
           {/* WARNING */}
           <WarningBox
             status={status}
