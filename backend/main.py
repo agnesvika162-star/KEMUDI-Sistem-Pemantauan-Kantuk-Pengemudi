@@ -339,7 +339,7 @@ class LoginRequest(BaseModel):
 # =========================================
 # LOAD AI MODEL
 # =========================================
-model = load_model("eyee_model1 (1).keras")
+model = load_model("model\eye_model_22mei.keras")
 
 # =========================================
 # GLOBAL STATUS
