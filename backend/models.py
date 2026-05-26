@@ -58,7 +58,10 @@ class DailySummary(Base):
         primary_key=True,
         index=True
     )
-
+    user_id = Column(
+        Integer,
+        nullable=False
+    )
     # format:
     # YYYY-MM-DD
     date = Column(
@@ -125,3 +128,4 @@ class User(Base):
         TIMESTAMP(timezone=True),
         server_default=text("now()")
     )
+

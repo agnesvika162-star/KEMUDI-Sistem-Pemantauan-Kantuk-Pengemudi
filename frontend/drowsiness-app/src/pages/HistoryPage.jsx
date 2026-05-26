@@ -7,25 +7,66 @@ export default function HistoryPage() {
   const [currentPage, setCurrentPage] = useState(1);
 
   const perPage = 7;
-
+  const user = JSON.parse(
+  localStorage.getItem("user")
+);
   // FETCH DATA
+  // useEffect(() => {
+
+  //   fetch(`${import.meta.env.VITE_API_URL}/dashboard-history/${user.id}`)
+
+  //     .then((res) => res.json())
+
+  //     .then((data) => {
+
+  //       setHistoryData(data);
+
+  //     })
+
+  //     .catch((err) => console.log(err));
+
+  // }, []);
   useEffect(() => {
 
-    fetch("${import.meta.env.VITE_API_URL}/dashboard-history")
+  const fetchHistory = () => {
+
+    fetch(
+      `${import.meta.env.VITE_API_URL}/dashboard-history/${user.id}`
+    )
 
       .then((res) => res.json())
 
       .then((data) => {
 
-        setHistoryData(data);
+        if (Array.isArray(data)) {
+
+          setHistoryData(data);
+
+        } else {
+
+          setHistoryData([]);
+
+        }
 
       })
 
-      .catch((err) => console.log(err));
+      .catch((err) =>
+        console.error(err)
+      );
+  };
 
-  }, []);
+  // pertama kali load
+  fetchHistory();
 
-  // PAGINATION
+  // realtime refresh
+  const interval =
+    setInterval(fetchHistory, 3000);
+
+  return () =>
+    clearInterval(interval);
+
+}, []);
+  // // PAGINATION
   const totalPages = Math.ceil(
     historyData.length / perPage
   );

@@ -12,17 +12,17 @@ function StatusGrid({ status, drowsyDuration, warningCount }) {
   const isDrowsy = status === "DROWSY";
 
   return (
-    <div className="bg-white rounded-2xl border p-4 md:p-6">
+    <div className="bg-white rounded-2xl border p-3 md:p-6">
 
       {/* STATUS */}
-      <div className="mb-8">
+      <div className="mb-4 md:mb-8">
         <p className="text-xs md:text-sm text-gray-500 mb-2">
           STATUS
         </p>
 
         <div className="flex items-center gap-2">
           <h1
-            className={`text-2xl md:text-4xl font-bold
+            className={`text-lg sm:text-2xl md:text-4xl font-bold
             ${
               isDrowsy
                 ? "text-red-500"
@@ -50,7 +50,7 @@ function StatusGrid({ status, drowsyDuration, warningCount }) {
       </div>
 
       {/* BOTTOM */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
+      <div className="grid grid-cols-2 gap-3 md:gap-6">
 
         {/* DURASI */}
         <div>
@@ -58,7 +58,7 @@ function StatusGrid({ status, drowsyDuration, warningCount }) {
             DURASI KANTUK
           </p>
 
-          <h2 className="text-2xl md:text-4xl font-bold text-blue-500 mt-2">
+          <h2 className="text-lg sm:text-lg sm:text-2xl md:text-4xl font-bold text-blue-500 mt-2">
             {formatTime(drowsyDuration)}
           </h2>
 

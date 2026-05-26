@@ -1,3 +1,4 @@
+import { Toaster } from "react-hot-toast";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 
@@ -17,6 +18,10 @@ function App() {
   const [isCameraOn, setIsCameraOn] = useState(true);
 
   const [isMuted, setIsMuted] = useState(false);
+  const [monitoringTime, setMonitoringTime] = useState(0);
+  const [warningCount, setWarningCount] = useState(0);
+  const [totalDrowsyDuration, setTotalDrowsyDuration] = useState(0);
+  const [wasDrowsy, setWasDrowsy] = useState(false);
   // =====================================
   // USER STATE (GLOBAL)
   // =====================================
@@ -123,6 +128,17 @@ useEffect(() => {
                     setIsCameraOn={setIsCameraOn}
                     isMuted={isMuted}
                     setIsMuted={setIsMuted}
+                    monitoringTime={monitoringTime}
+                    setMonitoringTime={setMonitoringTime}
+
+                    warningCount={warningCount}
+                    setWarningCount={setWarningCount}
+
+                    totalDrowsyDuration={totalDrowsyDuration}
+                    setTotalDrowsyDuration={setTotalDrowsyDuration}
+
+                    wasDrowsy={wasDrowsy}
+                    setWasDrowsy={setWasDrowsy}
                   />
                 }
               />
@@ -130,8 +146,15 @@ useEffect(() => {
               {/* DASHBOARD */}
               <Route
                 path="/dashboard"
-                element={<DashboardPage drowsinessLevel={drowsinessLevel} />}
-              />
+                element={
+                  <DashboardPage
+                    drowsinessLevel={drowsinessLevel}
+                    monitoringTime={monitoringTime}
+                    warningCount={warningCount}
+                    totalDrowsyDuration={totalDrowsyDuration}
+                  />
+              }
+            />
 
               {/* PROFILE */}
               <Route
@@ -145,6 +168,20 @@ useEffect(() => {
           )}
         </Routes>
       </main>
+      
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 3000,
+          style: {
+            background: "#fff",
+            color: "#111",
+            borderRadius: "12px",
+            padding: "14px 18px",
+          fontSize: "14px",
+        },
+      }}
+    />
     </div>
   );
 }

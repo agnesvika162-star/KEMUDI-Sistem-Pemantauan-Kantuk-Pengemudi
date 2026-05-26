@@ -508,6 +508,9 @@ const MAX_Y = 100;
 // ─── Component ──────────────────────────────────────────────────────────────
 
 export default function ChartSection() {
+  const user = JSON.parse(
+  localStorage.getItem("user")
+);
   const [fullData, setFullData] = useState([]);
   const [tooltip, setTooltip] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -515,7 +518,7 @@ export default function ChartSection() {
   const svgWrapRef = useRef(null);
 
   useEffect(() => {
-    fetch(`${import.meta.env.VITE_API_URL}/dashboard-history`)
+    fetch(`${import.meta.env.VITE_API_URL}/dashboard-history/${user.id}`)
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data)) {

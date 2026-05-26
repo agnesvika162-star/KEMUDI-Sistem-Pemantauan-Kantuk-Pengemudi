@@ -1,5 +1,6 @@
 ("use client");
 
+import toast from "react-hot-toast";
 import { useState } from "react";
 import { useLocation, useNavigate, NavLink } from "react-router-dom";
 import { removeAccessToken } from "../utils/auth";
@@ -26,44 +27,41 @@ function Navbar({
 
   // 🔥 AUTH PAGE
   const isAuthPage =
-    location.pathname === "/login" || location.pathname === "/register";
-
-  // 🔥 LOGOUT
+  location.pathname === "/login" || location.pathname === "/register";
   const handleLogout = () => {
-    removeAccessToken();
-
-    localStorage.removeItem("user");
-
-    // RESET USER
-    setUser({
-      name: "",
-      email: "",
-      photo: "",
-    });
-
-    window.location.href = "/login";
-  };
+  removeAccessToken();
+  localStorage.removeItem("user");
+  setIsCameraOn?.(false);
+  setIsMuted?.(true);
+  setUser({
+    name: "",
+    email: "",
+    photo: "",
+  });
+  toast.success("Logout berhasil");
+  window.location.href = "/login";
+};
 
   return (
     <div className="w-full bg-white border-b fixed top-0 left-0 z-50 shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 md:px-8 py-3 md:py-4 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-8 py-2 md:py-4 flex items-center">
         {/* LEFT */}
-        <div className="flex flex-col leading-tight">
-          <h1 className="text-2xl md:text-3xl font-bold text-blue-600">KEMUDI</h1>
+        <div className="flex-1 flex flex-col leading-tight">
+          <h1 className="text-base sm:text-lg md:text-3xl font-bold text-blue-600">KEMUDI</h1>
 
-          <p className="text-[9px] md:text-xs text-gray-500 mt-1">
+          <p className="text-[7px] sm:text-[8px] md:text-xs text-gray-500 mt-[2px] leading-tight">
             Sistem Pemantauan Kantuk Pengemudi
           </p>
         </div>
 
         {/* CENTER */}
         {!isAuthPage && location.pathname !== "/profile" && (
-          <div className="hidden md:flex items-center gap-10 lg:gap-16">
+          <div className="flex items-center justify-center gap-2 sm:gap-4 md:gap-10 lg:gap-16">
             {/* LIVE DETECTION */}
             <NavLink
               to="/"
               className={({ isActive }) =>
-                `font-semibold pb-3 transition text-sm md:text-base lg:text-lg relative
+                `font-semibold pb-3 transition text-[9px] sm:text-xs md:text-base lg:text-lg relative
                 ${
                   isActive
                     ? "text-blue-600"
@@ -85,7 +83,7 @@ function Navbar({
             <NavLink
               to="/dashboard"
               className={({ isActive }) =>
-                `font-semibold pb-3 transition text-sm md:text-base lg:text-lg relative
+                `font-semibold pb-3 transition text-[9px] sm:text-xs md:text-base lg:text-lg relative
                 ${
                   isActive
                     ? "text-blue-600"
@@ -107,14 +105,14 @@ function Navbar({
 
         {/* RIGHT */}
         {!isAuthPage && (
-          <div className="flex items-center gap-2 md:gap-4">
+          <div className="flex-1 flex items-center justify-end gap-[2px] sm:gap-2 md:gap-4">
             {/* 🔥 LIVE PAGE ONLY */}
             {location.pathname === "/" && (
               <>
                 {/* CAMERA */}
                 <button
                   onClick={() => setIsCameraOn((prev) => !prev)}
-                  className={`flex items-center gap-2 px-3 md:px-5 py-2 rounded-full text-xs md:text-sm font-medium transition
+                  className={`flex items-center gap-2 px-1.5 sm:px-2 md:px-5 py-1 md:py-2 rounded-full text-[8px] sm:text-[10px] md:text-sm font-medium transition
 
                   ${
                     isCameraOn

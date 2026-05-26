@@ -4,8 +4,15 @@ import { useEffect, useRef, useState } from "react";
 
 import ChartSection from "../components/ChartSection";
 
-function DashboardPage() {
-
+function DashboardPage({
+  drowsinessLevel,
+  monitoringTime,
+  warningCount,
+  totalDrowsyDuration,
+}) {
+const user = JSON.parse(
+  localStorage.getItem("user")
+);
   // 🔥 DATA HISTORY
   const [historyData, setHistoryData] = useState([]);
 
@@ -47,13 +54,15 @@ function DashboardPage() {
 
       try {
 
-        await fetch(`${import.meta.env.VITE_API_URL}/update-summary`, {
+        await fetch(`${import.meta.env.VITE_API_URL}/update-summary/${user.id}`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             },
 
             body: JSON.stringify({
+              user_id: user.id,
+
               duration: deltaDuration,
 
               drowsy_count: deltaCount,
@@ -81,7 +90,7 @@ function DashboardPage() {
   // =====================================
   useEffect(() => {
 
-    fetch(`${import.meta.env.VITE_API_URL}/dashboard-history`)
+    fetch(`${import.meta.env.VITE_API_URL}/dashboard-history/${user.id}`)
 
       .then((res) => res.json())
 
@@ -160,9 +169,9 @@ function DashboardPage() {
         <ChartSection />
 
         {/* TABLE */}
-        <div className="bg-white rounded-2xl border p-4 md:p-6 shadow-sm mt-6">
+        <div className="bg-white rounded-xl md:rounded-2xl border p-3 md:p-6 shadow-sm mt-4 md:mt-6">
 
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-6">
+          <h1 className="text-lg sm:text-xl md:text-3xl font-bold text-gray-800 mb-4 md:mb-6">
 
             Riwayat Perjalanan
 
@@ -170,31 +179,31 @@ function DashboardPage() {
 
           <div className="overflow-x-auto">
 
-            <table className="w-full text-sm md:text-base">
+            <table className="w-full text-[10px] sm:text-xs md:text-base">
 
               <thead>
 
                 <tr className="bg-[#F5F7FB] text-gray-700">
 
-                  <th className="py-3 md:py-4 rounded-l-xl">
+                  <th className="py-2 md:py-4 rounded-l-lg md:rounded-l-xl px-1 md:px-3">
 
                     Tanggal
 
                   </th>
 
-                  <th>
+                  <th className="px-1 md:px-3">
 
                     Durasi Mengemudi
 
                   </th>
 
-                  <th>
+                  <th className="px-1 md:px-3">
 
                     Frekuensi Kantuk
 
                   </th>
 
-                  <th className="rounded-r-xl">
+                  <th className="rounded-r-lg md:rounded-r-xl px-1 md:px-3">
 
                     Status
 
@@ -231,30 +240,30 @@ function DashboardPage() {
                     >
 
                       {/* TANGGAL */}
-                      <td className="py-3 md:py-5">
+                      <td className="py-2 md:py-5 px-1 md:px-3">
 
                         {item.tanggal}
 
                       </td>
                       {/* DURASI */}
-                      <td>
+                      <td className="px-1 md:px-3">
 
                         {item.durasi}
 
                       </td>
 
                       {/* FREKUENSI */}
-                      <td>
+                      <td className="px-1 md:px-3">
 
                         {item.frekuensi}x
 
                       </td>
 
                       {/* STATUS */}
-                      <td>
+                      <td className="px-1 md:px-3">
 
                         <span
-                          className={`px-3 md:px-4 py-1 rounded-full text-xs md:text-sm font-semibold
+                          className={`px-2 md:px-4 py-[2px] md:py-1 rounded-full text-[9px] sm:text-[10px] md:text-sm font-semibold
 
                           ${
                             item.status === "DROWSY"
@@ -285,7 +294,7 @@ function DashboardPage() {
           {/* FOOTER */}
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mt-6">
 
-            <p className="text-sm md:text-base text-gray-500">
+            <p className="text-[10px] sm:text-xs md:text-base text-gray-500">
 
               Menampilkan {startIndex + 1}
 
@@ -301,11 +310,11 @@ function DashboardPage() {
             </p>
 
             {/* PAGINATION */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 md:gap-3">
 
               <button
                 onClick={prevPage}
-                className="w-10 h-10 rounded-xl border bg-white hover:bg-gray-50"
+                className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 rounded-xl border bg-white hover:bg-gray-50"
               >
 
                 {"<"}
@@ -313,7 +322,7 @@ function DashboardPage() {
               </button>
 
               <button
-                className="w-10 h-10 rounded-xl bg-blue-500 text-white font-semibold"
+                className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 rounded-xl bg-blue-500 text-white font-semibold"
               >
 
                 {currentPage}
@@ -322,7 +331,7 @@ function DashboardPage() {
 
               <button
                 onClick={nextPage}
-                className="w-10 h-10 rounded-xl border bg-white hover:bg-gray-50"
+                className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 rounded-xl border bg-white hover:bg-gray-50"
               >
 
                 {">"}

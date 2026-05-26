@@ -509,6 +509,8 @@ function CameraSection({
   setStatus,
   setConfidence,
   isMuted,
+  monitoringTime,
+  setMonitoringTime,
 }) {
 
   const videoRef = useRef(null);
@@ -518,9 +520,9 @@ function CameraSection({
   const streamRef = useRef(null);
 
   // 🔥 ALARM
-  const alarmRef = useRef(
-    new Audio("/alarm.mp3")
-  );
+  // const alarmRef = useRef(
+  //   new Audio("/alarm.mp3")
+  // );
 
   const [seconds, setSeconds] =
     useState(0);
@@ -528,53 +530,53 @@ function CameraSection({
   // =========================================
   // 🔥 SET ALARM LOOP
   // =========================================
-  useEffect(() => {
+  // useEffect(() => {
 
-    alarmRef.current.loop = true;
+  //   alarmRef.current.loop = true;
 
-  }, []);
+  // }, []);
 
   // =========================================
   // 🔥 PLAY / STOP ALARM
   // =========================================
-  useEffect(() => {
+  // useEffect(() => {
 
-    // mute aktif
-    if (isMuted) {
+  //   // mute aktif
+  //   if (isMuted) {
 
-      alarmRef.current.pause();
+  //     alarmRef.current.pause();
 
-      alarmRef.current.currentTime = 0;
+  //     alarmRef.current.currentTime = 0;
 
-      return;
-    }
+  //     return;
+  //   }
 
-    // status drowsy
-    if (
-      status === "DROWSY" &&
-      alarmRef.current.paused
-    ) {
+  //   // status drowsy
+  //   if (
+  //     status === "DROWSY" &&
+  //     alarmRef.current.paused
+  //   ) {
 
-      alarmRef.current
-        .play()
-        .catch((err) => {
+  //     alarmRef.current
+  //       .play()
+  //       .catch((err) => {
 
-          console.log(
-            "Audio blocked:",
-            err
-          );
-        });
+  //         console.log(
+  //           "Audio blocked:",
+  //           err
+  //         );
+  //       });
 
-    } else if (
-      status === "AWAKE"
-    ) {
+  //   } else if (
+  //     status === "AWAKE"
+  //   ) {
 
-      alarmRef.current.pause();
+  //     alarmRef.current.pause();
 
-      alarmRef.current.currentTime = 0;
-    }
+  //     alarmRef.current.currentTime = 0;
+  //   }
 
-  }, [status, isMuted]);
+  // }, [status, isMuted]);
 
   // =========================================
   // 🎥 START CAMERA
@@ -649,9 +651,9 @@ function CameraSection({
       }
 
       // stop alarm
-      alarmRef.current.pause();
+      // alarmRef.current.pause();
 
-      alarmRef.current.currentTime = 0;
+      // alarmRef.current.currentTime = 0;
     }
 
   }, [isCameraOn]);
@@ -659,31 +661,31 @@ function CameraSection({
   // =========================================
   // 🔥 RESET LOCAL STORAGE
   // =========================================
-  useEffect(() => {
+  // useEffect(() => {
 
-    if (isCameraOn) {
+  //   if (isCameraOn) {
 
-      localStorage.setItem(
-        "duration",
-        0
-      );
+  //     localStorage.setItem(
+  //       "duration",
+  //       0
+  //     );
 
-      localStorage.setItem(
-        "drowsyCount",
-        0
-      );
+  //     localStorage.setItem(
+  //       "drowsyCount",
+  //       0
+  //     );
 
-      localStorage.setItem(
-        "status",
-        JSON.stringify(
-          "AWAKE"
-        )
-      );
+  //     localStorage.setItem(
+  //       "status",
+  //       JSON.stringify(
+  //         "AWAKE"
+  //       )
+  //     );
 
-      setSeconds(0);
-    }
+  //     setSeconds(0);
+  //   }
 
-  }, [isCameraOn]);
+  // }, [isCameraOn]);
 
   // =========================================
   // ⏱️ TIMER
@@ -696,7 +698,7 @@ function CameraSection({
     const interval =
       setInterval(() => {
 
-        setSeconds((prev) => {
+        setMonitoringTime((prev) => {
 
           const newValue =
             prev + 1;
@@ -728,7 +730,7 @@ function CameraSection({
     ).padStart(2, "0");
 
     const sec = String(
-      seconds % 60
+      monitoringTime % 60
     ).padStart(2, "0");
 
     return `${minutes}:${sec}`;
@@ -802,16 +804,23 @@ function CameraSection({
 
       if (!blob)
         return;
-
       const formData =
-        new FormData();
+  new FormData();
 
-      formData.append(
-        "file",
-        blob,
-        "frame.jpg"
-      );
+        const user = JSON.parse(
+  localStorage.getItem("user")
+);
 
+        formData.append(
+  "user_id",
+  user.id
+);
+
+        formData.append(
+  "file",
+  blob,
+  "frame.jpg"
+);
       try {
 
         const response =
@@ -951,7 +960,7 @@ function CameraSection({
           autoPlay
           playsInline
           muted
-          className="absolute w-full h-full object-cover"
+          className="absolute w-full h-full object-cover scale-x-[-1]"
         />
 
         {/* HIDDEN CANVAS */}

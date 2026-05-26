@@ -285,18 +285,18 @@ useEffect(() => {
 
   return (
     <div className="min-h-screen bg-[#F5F7FB]">
-      <div className="max-w-7xl mx-auto px-4 md:px-8 pt-28 md:pt-36 pb-10">
+      <div className="w-full max-w-5xl mx-auto px-4 sm:px-5 md:px-8 pt-20 md:pt-28 pb-6">
         {/* HEADER */}
-        <div className="mb-10">
-          <h1 className="text-3xl md:text-5xl font-bold text-[#0F172A]">Profil Saya</h1>
+        <div className="mb-5">
+          <h1 className="text-2xl sm:text-sm sm:text-lg md:text-3xl md:text-5xl font-bold text-[#0F172A]">Profil Saya</h1>
 
-          <p className="text-sm md:text-lg text-gray-500 mt-3">
+          <p className="text-xs md:text-lg text-gray-500 mt-3">
             Dashboard &gt; Profil Saya
           </p>
         </div>
 
         {/* PROFILE CARD */}
-        <div className="bg-white rounded-3xl shadow-sm border p-5 md:p-10 flex flex-col md:flex-row items-center gap-8 md:gap-16">
+        <div className="bg-white rounded-2xl shadow-sm border p-4 sm:p-5 md:p-8 flex flex-row items-center gap-4 sm:gap-6 md:gap-10">
           {/* PHOTO */}
           <div className="relative flex flex-col items-center">
             {/* FOTO */}
@@ -304,12 +304,12 @@ useEffect(() => {
               <img
                 src={user.photo}
                 alt="profile"
-                className="w-32 h-32 md:w-44 md:h-44 rounded-full object-cover border-4 border-gray-100"
+                className="w-20 h-20 sm:w-24 sm:h-24 md:w-36 md:h-36 rounded-full object-cover border-4 border-gray-100"
               />
             ) : (
-              <div className="w-32 h-32 md:w-44 md:h-44 rounded-full bg-gray-100 flex items-center justify-center">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-36 md:h-36 rounded-full bg-gray-100 flex items-center justify-center">
                 <CircleUserRound
-                  size={90}
+                  size={32}
                   className="text-[#5B2C83]"
                   strokeWidth={1.5}
                 />
@@ -319,7 +319,7 @@ useEffect(() => {
             {/* EDIT BUTTON */}
             <button
               onClick={() => setIsEditOpen((prev) => !prev)}
-              className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 px-4 md:px-6 py-2 text-sm md:text-base rounded-full bg-white border shadow-md hover:bg-gray-50 font-medium transition flex items-center gap-2"
+              className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-2 px-3 md:px-5 py-1 text-[10px] sm:text-xs md:text-sm rounded-full bg-white border shadow-md hover:bg-gray-50 font-medium transition flex items-center gap-2"
             >
               📷 Edit
             </button>
@@ -364,94 +364,94 @@ useEffect(() => {
 
           {/* USER INFO */}
           <div>
-            <h2 className="text-2xl md:text-5xl font-bold text-[#0F172A] text-center md:text-left">
+            <h2 className="text-lg sm:text-2xl md:text-4xl font-bold text-[#0F172A] text-center md:text-left">
               {user?.name || "Nama User"}
             </h2>
 
-            <p className="text-base md:text-2xl text-gray-500 mt-2 md:mt-4 text-center md:text-left break-all">
+            <p className="text-xs sm:text-sm md:text-xl text-gray-500 mt-1 md:mt-4 text-center md:text-left break-all">
               {user?.email || "email@gmail.com"}
             </p>
           </div>
         </div>
 
         {/* ACTIVITY CARD */}
-        <div className="bg-white rounded-3xl shadow-sm border p-5 md:p-8 mt-8">
+        <div className="bg-white rounded-2xl shadow-sm border p-4 sm:p-5 md:p-7 mt-4">
           <div>
             <h2 className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-6">
               Aktivitas 30 Hari Terakhir
             </h2>
 
-            <p className="text-gray-500 mt-2 text-lg">
+            <p className="text-gray-500 mt-2 text-sm md:text-lg">
               Ringkasan aktivitas Anda selama 30 hari terakhir.
             </p>
           </div>
 
-          <div className="mt-10 space-y-8">
+          <div className="mt-4 space-y-3">
             {/* MONITORING */}
-            <div className="flex items-center justify-between border-b pb-6">
-              <div className="flex items-center gap-5">
-                <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-blue-50 flex items-center justify-center text-3xl">
+            <div className="flex items-start justify-between gap-3 sm:gap-6 border-b pb-4 md:pb-6">
+              <div className="flex items-center gap-3 sm:gap-4 md:gap-5">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 rounded-full bg-blue-50 flex items-center justify-center text-sm sm:text-xl md:text-3xl">
                   📅
                 </div>
 
                 <div>
-                  <h3 className="text-lg md:text-2xl font-semibold text-[#0F172A]">
+                  <h3 className="text-sm sm:text-base md:text-xl font-semibold text-[#0F172A]">
                     Monitoring Terakhir
                   </h3>
 
-                  <p className="text-sm md:text-lg text-gray-500 mt-1">
+                  <p className="text-[11px] sm:text-xs md:text-lg text-gray-500 mt-1">
                     Waktu terakhir sistem memantau aktivitas Anda.
                   </p>
                 </div>
               </div>
 
-              <p className="text-xl md:text-3xl font-bold text-[#0F172A]">
+              <p className="text-xs sm:text-sm md:text-xl font-semibold text-[#0F172A] text-right min-w-[85px] md:min-w-[140px] leading-tight">
                 {activity.lastMonitoring}
               </p>
             </div>
 
             {/* DROWSY */}
-            <div className="flex items-center justify-between border-b pb-6">
-              <div className="flex items-center gap-5">
-                <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center text-3xl">
+            <div className="flex items-start justify-between gap-3 sm:gap-6 border-b pb-4 md:pb-6">
+              <div className="flex items-center gap-3 sm:gap-4 md:gap-5">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 rounded-full bg-red-50 flex items-center justify-center text-sm sm:text-xl md:text-3xl">
                   ⚠️
                 </div>
 
                 <div>
-                  <h3 className="text-2xl font-semibold text-[#0F172A]">
+                  <h3 className="text-sm md:text-2xl font-semibold text-[#0F172A]">
                     Total Deteksi (30 Hari Terakhir)
                   </h3>
 
-                  <p className="text-gray-500 text-lg mt-1">
+                  <p className="text-[11px] sm:text-xs md:text-lg text-gray-500 mt-1">
                     Jumlah total deteksi kantuk dalam 30 hari terakhir.
                   </p>
                 </div>
               </div>
 
-              <p className="text-3xl font-bold text-[#0F172A]">
+              <p className="text-xs sm:text-sm md:text-xl font-semibold text-[#0F172A] text-right min-w-[85px] md:min-w-[140px] leading-tight">
                 {activity.totalDrowsy} kali
               </p>
             </div>
 
             {/* DURATION */}
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-5">
-                <div className="w-16 h-16 rounded-full bg-green-50 flex items-center justify-center text-3xl">
+              <div className="flex items-center gap-3 sm:gap-4 md:gap-5">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 rounded-full bg-green-50 flex items-center justify-center text-sm sm:text-xl md:text-3xl">
                   ⏱️
                 </div>
 
                 <div>
-                  <h3 className="text-2xl font-semibold text-[#0F172A]">
+                  <h3 className="text-sm sm:text-base md:text-2xl font-semibold text-[#0F172A]">
                     Durasi Rata-Rata Perjalanan
                   </h3>
 
-                  <p className="text-gray-500 text-lg mt-1">
+                  <p className="text-[11px] sm:text-xs md:text-lg text-gray-500 mt-1">
                     Rata-rata durasi setiap perjalanan Anda.
                   </p>
                 </div>
               </div>
 
-              <p className="text-3xl font-bold text-[#0F172A]">
+              <p className="text-xs sm:text-sm md:text-xl font-semibold text-[#0F172A] text-right min-w-[85px] md:min-w-[140px] leading-tight">
                 {activity.totalDuration}
               </p>
             </div>
@@ -466,7 +466,7 @@ useEffect(() => {
       {/* CAMERA MODAL */}
       {isCameraOpen && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[9999]">
-          <div className="bg-white rounded-3xl p-6 w-[500px]">
+          <div className="bg-white rounded-2xl p-6 w-[500px]">
             <video
               ref={videoRef}
               autoPlay

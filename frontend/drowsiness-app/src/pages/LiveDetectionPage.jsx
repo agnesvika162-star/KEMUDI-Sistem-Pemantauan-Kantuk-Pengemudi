@@ -10,16 +10,23 @@ export default function LiveDetectionPage({
   setIsCameraOn,
   isMuted,
   setIsMuted,
-}) {
+  monitoringTime,
+  setMonitoringTime,
+
+  warningCount,
+  setWarningCount,
+
+  totalDrowsyDuration,
+  setTotalDrowsyDuration,
+
+  wasDrowsy,
+  setWasDrowsy,
+})
+
+{
   const [status, setStatus] = useState("AWAKE");
 
   const [confidence, setConfidence] = useState(0);
-
-  const [warningCount, setWarningCount] = useState(0);
-
-  const [totalDrowsyDuration, setTotalDrowsyDuration] = useState(0);
-
-  const [wasDrowsy, setWasDrowsy] = useState(false);
 
   const alarmRef = useRef(null);
 
@@ -29,7 +36,7 @@ export default function LiveDetectionPage({
   useEffect(() => {
     let interval;
 
-    if (status === "DROWSY") {
+    if (status === "DROWSY" && isCameraOn) {
       interval = setInterval(() => {
         setTotalDrowsyDuration((prev) => prev + 1);
       }, 1000);
@@ -54,30 +61,61 @@ export default function LiveDetectionPage({
   }, [status, wasDrowsy]);
 
 // =====================================
+// SYNC LOCAL STORAGE
+// =====================================
+useEffect(() => {
+
+  localStorage.setItem(
+    "drowsyCount",
+    warningCount
+  );
+
+  localStorage.setItem(
+    "duration",
+    totalDrowsyDuration
+  );
+
+}, [warningCount, totalDrowsyDuration]);
+
+// =====================================
 // AUDIO
 // =====================================
 useEffect(() => {
 
   if (!alarmRef.current) return;
 
-  // 🔥 DROWSY & SOUND ON
-  if (
-    drowsinessLevel >= 50 &&
-    !isMuted
-  ) {
+  // 🔇 MUTE = MATIKAN LANGSUNG
+  if (isMuted) {
 
-    // PLAY SEKALI
+    alarmRef.current.pause();
+
+    alarmRef.current.currentTime = 0;
+
+    return;
+  }
+
+  // 🔥 DROWSY = PLAY
+  if (status === "DROWSY" && !isMuted) {
+
     if (alarmRef.current.paused) {
 
       alarmRef.current.loop = true;
 
-      alarmRef.current.play().catch(() => {});
+      alarmRef.current
+        .play()
+        .catch((err) => {
 
+          console.log(
+            "ALARM ERROR:",
+            err
+          );
+
+        });
     }
 
   }
 
-  // 🔥 STOP AUDIO
+  // 🙂 AWAKE = STOP
   else {
 
     alarmRef.current.pause();
@@ -86,7 +124,7 @@ useEffect(() => {
 
   }
 
-}, [drowsinessLevel, isMuted]);
+}, [status, isMuted]);
 
   // =====================================
   // STATUS
@@ -107,11 +145,13 @@ useEffect(() => {
             setConfidence={setConfidence}
             setDrowsinessLevel={setDrowsinessLevel}
             drowsinessLevel={drowsinessLevel}
+            monitoringTime={monitoringTime}
+            setMonitoringTime={setMonitoringTime}
           />
         </div>
 
         {/* BOTTOM SECTION */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mt-6">
+        <div className="grid grid-cols-1 lg:grid-cols-[1.3fr_0.7fr] gap-3 md:gap-6 mt-4 md:mt-6 items-start">
           {/* WARNING */}
           <WarningBox
             status={status}

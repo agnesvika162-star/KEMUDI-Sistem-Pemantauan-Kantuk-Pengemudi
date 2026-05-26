@@ -3,6 +3,7 @@
 # =========================================
 from fastapi import (
     FastAPI,
+    Form,
     UploadFile,
     File,
     Depends,
@@ -10,17 +11,12 @@ from fastapi import (
 )
 from dotenv import load_dotenv
 import os
-
 load_dotenv()
-
 MODEL_NAME = os.getenv("MODEL")
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.cors import CORSMiddleware
-
 from fastapi.staticfiles import StaticFiles
-
 from sqlalchemy import (
     create_engine,
     Column,
@@ -29,26 +25,20 @@ from sqlalchemy import (
     Float,
     DateTime
 )
-
 from sqlalchemy.sql import text
-
 from sqlalchemy.orm import (
     declarative_base,
     sessionmaker,
     Session
 )
-
 from pydantic import BaseModel
-
 from passlib.context import CryptContext
-
 from tensorflow.keras.models import load_model
-
 from datetime import datetime
 
 from uuid import uuid4
 
-from models import DailySummary
+from models import DailySummary, Post
 
 import numpy as np
 import cv2
@@ -139,16 +129,19 @@ def get_db():
 # =========================================
 # DROWSY HISTORY TABLE
 # =========================================
-class DrowsyHistory(Base):
+class DetectionData(Base):
 
-    __tablename__ = "drowsy_history"
+    __tablename__ = "data"
 
     id = Column(
         Integer,
         primary_key=True,
         index=True
     )
-
+    user_id = Column(
+        Integer,
+        nullable=True
+    )
     status = Column(
         String,
         nullable=False
@@ -171,7 +164,6 @@ class DrowsyHistory(Base):
 class User(Base):
 
     __tablename__ = "users"
-
     id = Column(
         Integer,
         primary_key=True,
@@ -338,6 +330,8 @@ class LoginRequest(BaseModel):
 # =========================================
 # LOAD AI MODEL
 # =========================================
+MODEL_NAME = "Model/eye_model_22mei.keras"
+
 model = load_model(MODEL_NAME)
 
 IMG_SIZE=(96,96)
@@ -687,16 +681,16 @@ def profile_activity_summary(
         # TOTAL DROWSY
         # =====================================
         total_drowsy = db.query(
-            DrowsyHistory
+            DetectionData
         ).count()
 
         # =====================================
         # LAST MONITORING
         # =====================================
         last_data = db.query(
-            DrowsyHistory
+            DetectionData
         ).order_by(
-            DrowsyHistory.created_at.desc()
+            DetectionData.created_at.desc()
         ).first()
 
         # =====================================
@@ -749,140 +743,6 @@ last_status = "AWAKE"
 # =========================================
 # AI PREDICT
 # =========================================
-# def predict_drowsiness(img):
-
-#     global last_status
-
-#     try:
-
-#         # =====================================
-#         # RESIZE
-#         # =====================================
-#         img = cv2.resize(
-#             img,
-#             (96, 96)
-#         )
-
-#         # =====================================
-#         # GRAYSCALE
-#         # =====================================
-#         img = cv2.cvtColor(
-#             img,
-#             cv2.COLOR_BGR2GRAY
-#         )
-
-#         # =====================================
-#         # NORMALIZE
-#         # =====================================
-#         img = img.astype("float32") / 255.0
-
-#         # =====================================
-#         # RESHAPE
-#         # =====================================
-#         img = np.expand_dims(
-#             img,
-#             axis=-1
-#         )
-
-#         img = np.expand_dims(
-#             img,
-#             axis=0
-#         )
-
-#         print(
-#             "INPUT SHAPE:",
-#             img.shape
-#         )
-
-#         # =====================================
-#         # PREDICT
-#         # =====================================
-#         prediction = model.predict(
-#             img,
-#             verbose=0
-#         )
-
-#         print(
-#             "RAW PREDICTION:",
-#             prediction
-#         )
-
-#         value = float(
-#             prediction[0][0]
-#         )
-
-#         print(
-#             "RAW VALUE:",
-#             value
-#         )
-
-#         # =====================================
-#         # STATUS
-#         # =====================================
-#         # MODEL BARU:
-#         # 1 = AWAKE
-#         # 0 = DROWSY
-#         # =====================================
-
-#         if value >= 0.50:
-
-#             status = "AWAKE"
-
-#         else:
-
-#             status = "DROWSY"
-#         print("STATUS:", status)
-#         # =====================================
-#         # SAVE LAST STATUS
-#         # =====================================
-#         last_status = status
-
-#         # =====================================
-#         # RETURN
-#         # =====================================
-#         return {
-
-#             "status": status,
-
-#             "confidence": round(
-#                 value * 100,
-#                 2
-#             )
-#         }
-
-#     except Exception as e:
-
-#         print(
-#             "PREDICT ERROR:",
-#             e
-#         )
-
-#         return {
-
-#             "status": last_status,
-
-#             "confidence": 0
-#         }
-#     # =====================================
-#     # CONFIDENCE
-#     # =====================================
-#     confidence = max(
-#         value,
-#         1 - value
-#     ) * 100
-
-#     result = {
-
-#         "status": status,
-
-#         "confidence": round(confidence, 2),
-
-#         "value": round(value, 4)
-#     }
-
-#     print("AI RESULT:", result)
-
-#     return result
 
 def predict_drowsiness(img):
 
@@ -1087,7 +947,7 @@ def predict_drowsiness(img):
 
             round(
                 float(avg_score),
-                4``
+                4
             )
         }
 
@@ -1121,10 +981,13 @@ def predict_drowsiness(img):
 # =========================================
 @app.post("/predict")
 async def predict(
+    user_id: int = Form(...),
     file: UploadFile = File(...),
     db: Session = Depends(get_db)
 ):
-
+    
+    print("PREDICT HIT")
+    print("USER ID:", user_id)
     global last_save_time
 
     try:
@@ -1160,8 +1023,8 @@ async def predict(
             and current_time - last_save_time > 5
         ):
 
-            new_data = DrowsyHistory(
-
+            new_data = DetectionData(
+                user_id=user_id,
                 status=result["status"],
 
                 confidence=result["confidence"]
@@ -1193,8 +1056,9 @@ async def predict(
 # =========================================
 # UPDATE SUMMARY
 # =========================================
-@app.post("/update-summary")
+@app.post("/update-summary/{user_id}")
 async def update_summary(
+    user_id: int,
     data: dict
 ):
 
@@ -1206,17 +1070,16 @@ async def update_summary(
         duration = data.get("duration", 0)
         drowsy_count = data.get("drowsy_count", 0)
         summary = db.query(DailySummary).filter(
-            DailySummary.date == today
+            DailySummary.date == today,
+            DailySummary.user_id == user_id
         ).first()
 
         if not summary:
 
             summary = DailySummary(
-
+                user_id=user_id,
                 date=today,
-
                 total_duration=duration,
-
                 total_drowsy=drowsy_count
             )
 
@@ -1250,13 +1113,14 @@ async def update_summary(
 # =========================================
 # CHART DATA
 # =========================================
-@app.get("/chart-data")
-def get_chart_data():
+@app.get("/chart-data/{user_id}")
+def get_chart_data(user_id: int):
 
     db = SessionLocal()
 
     summaries = (
         db.query(DailySummary)
+        .filter(DailySummary.user_id == user_id)
         .order_by(DailySummary.id.asc())
         .limit(30)
         .all()
@@ -1280,11 +1144,12 @@ def get_chart_data():
 # =========================================
 # DASHBOARD HISTORY
 # =========================================
-@app.get("/dashboard-history")
-def dashboard_history():
+@app.get("/dashboard-history/{user_id}")
+def dashboard_history(user_id: int):
     db = SessionLocal()
     summaries = (
         db.query(DailySummary)
+        .filter(DailySummary.user_id == user_id)
         .order_by(DailySummary.id.desc())
         .limit(30)
         .all()
