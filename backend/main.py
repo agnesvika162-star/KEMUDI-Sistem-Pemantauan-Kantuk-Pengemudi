@@ -52,7 +52,8 @@ import os
 from uuid import uuid4
 from fastapi.staticfiles import StaticFiles
 import mediapipe as mp
-
+from jose import jwt
+from datetime import timedelta
 
 # =========================================
 # HIDE TENSORFLOW WARNING
@@ -83,7 +84,7 @@ app.add_middleware(
     #     FRONTEND_URL,
     #     BACKEND_URL,
     # ],
-    allow_origins=["*"],
+    allow_origins=["http://localhost:5173"],
 
     allow_credentials=True,
 
@@ -91,6 +92,31 @@ app.add_middleware(
 
     allow_headers=["*"],
 )
+
+SECRET_KEY = os.getenv("SECRET_KEY")
+ALGORITHM = os.getenv("ALGORITHM")
+# =========================================
+# CREATE JWT TOKEN
+# =========================================
+def create_access_token(data: dict):
+
+    to_encode = data.copy()
+    from datetime import timezone
+    expire = datetime.now(timezone.utc) + timedelta(
+        days=1
+    )
+
+    to_encode.update({
+        "exp": expire
+    })
+
+    encoded_jwt = jwt.encode(
+        to_encode,
+        SECRET_KEY,
+        algorithm=ALGORITHM
+    )
+
+    return encoded_jwt
 
 # =========================================
 # DATABASE
@@ -130,24 +156,46 @@ def get_db():
 
     finally:
         db.close()
-
-
-# =======================# =========================================
-# CHECK LOGIN COOKIE
+# =========================================
+# CHECK JWT LOGIN
 # =========================================
 def check_login(
-    session_user: str = Cookie(default=None)
+    access_token: str = Cookie(default=None)
 ):
 
-    if not session_user:
+    if not access_token:
 
         raise HTTPException(
             status_code=401,
             detail="Unauthorized"
         )
 
-    return session_user
+    try:
 
+        payload = jwt.decode(
+            access_token,
+            SECRET_KEY,
+            algorithms=[ALGORITHM]
+        )
+
+        user_id = payload.get("user_id")
+
+        if not user_id:
+
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid token"
+            )
+
+        return user_id
+
+    except Exception:
+
+        raise HTTPException(
+            status_code=401,
+            detail="Token invalid"
+        )
+    
 # DROWSY HISTORY TABLE
 # =========================================
 class DetectionData(Base):
@@ -542,33 +590,44 @@ def login(
                 detail="Invalid password"
             )
 
-        return {
+        # =====================================
+        # CREATE JWT TOKEN
+        # =====================================
+        token = create_access_token({
+            "user_id": user.id
+        })
 
-            "status": "success",
-
-            "message": "Login successful",
-
-            "user": {
-
-                "id": user.id,
-
-                "name": user.name,
-
-                "email": user.email,
-
-                "photo": user.photo
+        # =====================================
+        # RESPONSE
+        # =====================================
+        response = JSONResponse(
+            content={
+                "status": "success",
+                "message": "Login successful",
+                "token": token,
+                "user": {
+                    "id": user.id,
+                    "name": user.name,
+                    "email": user.email,
+                    "photo": user.photo
+                }
             }
-        }
-        # =====================================
-        # SET COOKIE LOGIN
-        # =====================================
-        response.set_cookie(
-            key="session_user",
-            value=str(user.id),
-            httponly=True
         )
 
+        # =====================================
+        # SET COOKIE
+        # =====================================
+        response.set_cookie(
+    key="access_token",
+    value=token,
+    httponly=True,
+    secure=False,
+    samesite="lax",
+    max_age=86400
+)
+
         return response
+
     except HTTPException:
 
         raise
@@ -1216,3 +1275,17 @@ def dashboard_history(user_id: int, current_user: str = Depends(check_login)):
 })
     db.close()
     return results
+
+@app.post("/logout")
+def logout():
+
+    response = JSONResponse(
+        content={
+            "status": "success",
+            "message": "Logout successful"
+        }
+    )
+
+    response.delete_cookie("access_token")
+
+    return response
