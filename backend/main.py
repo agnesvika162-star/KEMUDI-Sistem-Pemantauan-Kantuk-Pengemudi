@@ -54,6 +54,7 @@ from fastapi.staticfiles import StaticFiles
 import mediapipe as mp
 from jose import jwt
 from datetime import timedelta
+from models import User
 
 # =========================================
 # HIDE TENSORFLOW WARNING
@@ -195,37 +196,7 @@ def check_login(
             status_code=401,
             detail="Token invalid"
         )
-    
-# DROWSY HISTORY TABLE
-# =========================================
-class DetectionData(Base):
 
-    __tablename__ = "data"
-
-    id = Column(
-        Integer,
-        primary_key=True,
-        index=True
-    )
-    user_id = Column(
-        Integer,
-        nullable=True
-    )
-    status = Column(
-        String,
-        nullable=False
-    )
-
-    confidence = Column(
-        Float,
-        nullable=False
-    )
-
-    created_at = Column(
-        DateTime(timezone=True),
-        nullable=False,
-        server_default=text("CURRENT_TIMESTAMP")
-    )
 
 # =========================================
 # USER TABLE
@@ -402,7 +373,7 @@ class LoginRequest(BaseModel):
 # =========================================
 # LOAD AI MODEL
 # =========================================
-MODEL_NAME = "Model/eye_model_22mei.keras"
+MODEL_NAME = os.getenv("MODEL_NAME")
 
 model = load_model(MODEL_NAME)
 
@@ -606,10 +577,9 @@ def login(
                 "message": "Login successful",
                 "token": token,
                 "user": {
-                    "id": user.id,
                     "name": user.name,
                     "email": user.email,
-                    "photo": user.photo
+                    "profile": user.photo
                 }
             }
         )
