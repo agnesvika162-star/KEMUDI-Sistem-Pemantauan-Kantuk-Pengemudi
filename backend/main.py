@@ -7,8 +7,11 @@ from fastapi import (
     UploadFile,
     File,
     Depends,
-    HTTPException
+    HTTPException,
+    Cookie
 )
+
+from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 import os
 load_dotenv()
@@ -49,6 +52,7 @@ import os
 from uuid import uuid4
 from fastapi.staticfiles import StaticFiles
 import mediapipe as mp
+
 
 # =========================================
 # HIDE TENSORFLOW WARNING
@@ -126,7 +130,24 @@ def get_db():
 
     finally:
         db.close()
+
+
+# =======================# =========================================
+# CHECK LOGIN COOKIE
 # =========================================
+def check_login(
+    session_user: str = Cookie(default=None)
+):
+
+    if not session_user:
+
+        raise HTTPException(
+            status_code=401,
+            detail="Unauthorized"
+        )
+
+    return session_user
+
 # DROWSY HISTORY TABLE
 # =========================================
 class DetectionData(Base):
@@ -238,7 +259,8 @@ class TripHistory(Base):
 # =========================================
 @app.post("/start-trip")
 def start_trip(
-    user_id: int,
+    current_user: str = Depends(check_login),
+    user_id: int = Form(...),
     db: Session = Depends(get_db)
 ):
 
@@ -266,8 +288,10 @@ def start_trip(
 # END TRIP
 # =========================================
 @app.post("/end-trip/{trip_id}")
+
 def end_trip(
     trip_id: int,
+    current_user: str = Depends(check_login),
     db: Session = Depends(get_db)
 ):
 
@@ -535,7 +559,16 @@ def login(
                 "photo": user.photo
             }
         }
+        # =====================================
+        # SET COOKIE LOGIN
+        # =====================================
+        response.set_cookie(
+            key="session_user",
+            value=str(user.id),
+            httponly=True
+        )
 
+        return response
     except HTTPException:
 
         raise
@@ -555,6 +588,7 @@ def login(
 @app.post("/upload-profile")
 async def upload_profile(
     photo: UploadFile = File(...),
+    current_user: str = Depends(check_login),
     db: Session = Depends(get_db)
 ):
 
@@ -589,9 +623,7 @@ async def upload_profile(
         # =====================================
         # GET LAST USER
         # =====================================
-        user = db.query(User).order_by(
-            User.id.desc()
-        ).first()
+        user = db.query(User).filter(User.id == current_user).first()
 
         if not user:
 
@@ -634,14 +666,13 @@ async def upload_profile(
 # =========================================
 @app.get("/profile")
 def get_profile(
+    current_user: str = Depends(check_login),
     db: Session = Depends(get_db)
 ):
 
     try:
 
-        user = db.query(User).order_by(
-            User.id.desc()
-        ).first()
+        user = db.query(User).filter(User.id == current_user).first()
 
         if not user:
 
@@ -672,6 +703,7 @@ def get_profile(
 # =========================================
 @app.get("/profile/activity-summary")
 def profile_activity_summary(
+    current_user: str = Depends(check_login),
     db: Session = Depends(get_db)
 ):
 
@@ -983,6 +1015,7 @@ def predict_drowsiness(img):
 async def predict(
     user_id: int = Form(...),
     file: UploadFile = File(...),
+    current_user: str = Depends(check_login),
     db: Session = Depends(get_db)
 ):
     
@@ -1059,9 +1092,9 @@ async def predict(
 @app.post("/update-summary/{user_id}")
 async def update_summary(
     user_id: int,
-    data: dict
+    data: dict,
+    current_user: str = Depends(check_login)
 ):
-
     db = SessionLocal()
 
     try:
@@ -1114,8 +1147,7 @@ async def update_summary(
 # CHART DATA
 # =========================================
 @app.get("/chart-data/{user_id}")
-def get_chart_data(user_id: int):
-
+def get_chart_data(user_id: int, current_user: str = Depends(check_login)):
     db = SessionLocal()
 
     summaries = (
@@ -1145,7 +1177,7 @@ def get_chart_data(user_id: int):
 # DASHBOARD HISTORY
 # =========================================
 @app.get("/dashboard-history/{user_id}")
-def dashboard_history(user_id: int):
+def dashboard_history(user_id: int, current_user: str = Depends(check_login)):
     db = SessionLocal()
     summaries = (
         db.query(DailySummary)
