@@ -7,7 +7,8 @@ from sqlalchemy import (
     String,
     TIMESTAMP,
     Float,
-    text
+    text,
+    DateTime
 )
 
 # =========================================

@@ -21,11 +21,11 @@ from fastapi.staticfiles import StaticFiles
 import numpy as np
 import cv2
 import mediapipe as mp
-from passlib.context import CryptContext
 from tensorflow.keras.models import load_model
 
 # OTHERS
 from pydantic import BaseModel
+from sqlalchemy.orm import Session
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 import time
@@ -606,7 +606,7 @@ async def upload_profile(
 
         # SAVE PHOTO DATABASE
         photo_url = (
-            f"http://localhost:8000/uploads/{filename}"
+            f"uploads/{filename}"
         )
 
         user.photo = photo_url
@@ -671,10 +671,11 @@ def profile_activity_summary(
         # FORMAT LAST DATE
         if last_data and last_data.created_at:
             last_monitoring = (
-        	last_data.created_at.strftime(
-            		"%d %B %Y %H:%M"
-        	)
-    	)else:
+                last_data.created_at.strftime(
+                        "%d %B %Y %H:%M"
+                )
+    	    )
+        else:
             last_monitoring = "-"
         
         return {
@@ -695,7 +696,7 @@ def profile_activity_summary(
             status_code=500,
             detail=str(e)
         )
-    
+
 # POST /predict
 @app.post("/predict")
 async def predict(
