@@ -90,12 +90,53 @@ class DailySummary(Base):
 
 
 # =========================================
-# 🔵 MODEL USER
-# AUTHENTICATION SYSTEM
+# USER TABLE
 # =========================================
 class User(Base):
 
     __tablename__ = "users"
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
+
+    name = Column(
+        String,
+        nullable=False
+    )
+
+    email = Column(
+        String,
+        unique=True,
+        nullable=False
+    )
+
+    password = Column(
+        String,
+        nullable=False
+    )
+
+    # =====================================
+    # PROFILE PHOTO
+    # =====================================
+    photo = Column(
+        String,
+        nullable=True
+    )
+
+    created_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=text("CURRENT_TIMESTAMP")
+    )
+
+# =========================================
+# TRIP HISTORY
+# =========================================
+class TripHistory(Base):
+
+    __tablename__ = "trip_history"
 
     id = Column(
         Integer,
@@ -103,29 +144,22 @@ class User(Base):
         index=True
     )
 
-    # nama user
-    name = Column(
-        String,
+    user_id = Column(
+        Integer,
         nullable=False
     )
 
-    # email login
-    email = Column(
-        String,
-        unique=True,
-        index=True,
+    start_time = Column(
+        DateTime,
         nullable=False
     )
 
-    # hashed password
-    password = Column(
-        String,
-        nullable=False
+    end_time = Column(
+        DateTime,
+        nullable=True
     )
 
-    # waktu akun dibuat
-    created_at = Column(
-        TIMESTAMP(timezone=True),
-        server_default=text("now()")
+    duration_minutes = Column(
+        Float,
+        nullable=True
     )
-
