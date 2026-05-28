@@ -1,0 +1,500 @@
+import { useEffect, useRef, useState } from "react";
+import {
+  Camera,
+  ImagePlus,
+  UserRound,
+  CircleUserRound,
+} from "lucide-react";
+import Navbar from "../components/Navbar";
+
+export default function ProfilePage({ user, setUser }) {
+  const [isEditOpen, setIsEditOpen] = useState(false);
+
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+
+  const [stream, setStream] = useState(null);
+
+  const videoRef = useRef(null);
+
+  const canvasRef = useRef(null);
+
+  // =====================================
+  // ACTIVITY STATE
+  // =====================================
+const [activity, setActivity] =
+  useState({
+
+    lastMonitoring: "",
+
+    totalDrowsy: 0,
+
+    totalDuration: ""
+});
+
+  // =====================================
+  // LOAD ACTIVITY FROM BACKEND
+  // =====================================
+  useEffect(() => {
+    const fetchActivity = async () => {
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/profile/activity-summary`
+        );
+
+        const data = await response.json();
+
+        setActivity({
+          lastMonitoring: data.lastMonitoring || "-",
+
+          totalDrowsy: data.totalDrowsy || 0,
+
+          totalDuration: data.averageDuration || "-",
+        });
+      } catch (error) {
+        console.log("Gagal mengambil activity summary", error);
+      }
+    };
+
+    fetchActivity();
+  }, []);
+
+  // =====================================
+  // HANDLE PHOTO UPLOAD
+  // =====================================
+  const handlePhotoChange = async (e) => {
+    const file = e.target.files[0];
+
+    if (!file) return;
+
+    // =====================================
+    // TEMP PREVIEW FRONTEND
+    // =====================================
+    const previewUrl = URL.createObjectURL(file);
+
+    // =====================================
+    // UPDATE GLOBAL USER STATE
+    // =====================================
+const updatedUser = {
+  ...user,
+  photo: previewUrl,
+};
+setUser(updatedUser);
+localStorage.setItem(
+  "user",
+  JSON.stringify(updatedUser)
+);
+
+    setIsEditOpen(false);
+
+    // =====================================
+    // BACKEND READY
+    // =====================================
+    try {
+      const formData = new FormData();
+
+      formData.append("photo", file);
+
+      await fetch(`${import.meta.env.VITE_API_URL}/upload-profile`, {
+        method: "POST",
+        body: formData,
+      });
+    } catch (error) {
+      console.log("Upload backend belum tersedia", error);
+    }
+  };
+
+  // =====================================
+  // OPEN CAMERA
+  // =====================================
+  const openCamera = async () => {
+    try {
+      setIsEditOpen(false);
+
+      const mediaStream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: "user",
+        },
+        audio: false,
+      });
+
+      setStream(mediaStream);
+
+      setIsCameraOpen(true);
+
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = mediaStream;
+
+          videoRef.current.play();
+        }
+      }, 300);
+    } catch (error) {
+      console.log("Camera Error:", error);
+
+      alert(
+        "Kamera tidak dapat diakses. Pastikan browser sudah diberi izin kamera.",
+      );
+    }
+  };
+
+  // =====================================
+  // CLOSE CAMERA
+  // =====================================
+  const closeCamera = () => {
+    if (stream) {
+      stream.getTracks().forEach((track) => track.stop());
+    }
+
+    setIsCameraOpen(false);
+  };
+
+  // =====================================
+  // TAKE PHOTO
+  // =====================================
+  const takePhoto = async () => {
+    try {
+      const video = videoRef.current;
+
+      const canvas = canvasRef.current;
+
+      const context = canvas.getContext("2d");
+
+      canvas.width = video.videoWidth;
+
+      canvas.height = video.videoHeight;
+
+      context.drawImage(video, 0, 0);
+
+      const imageData = canvas.toDataURL("image/png");
+
+      // =====================================
+      // UPDATE GLOBAL USER STATE
+      // =====================================
+      const updatedUser = {
+  ...user,
+  photo: imageData,
+};
+setUser(updatedUser);
+localStorage.setItem(
+  "user",
+  JSON.stringify(updatedUser)
+);
+
+      closeCamera();
+
+      // =====================================
+      // BACKEND READY
+      // =====================================
+      try {
+        const blob = await new Promise((resolve) =>
+          canvas.toBlob(resolve, "image/png"),
+        );
+
+        const formData = new FormData();
+
+        formData.append("photo", blob, "camera-photo.png");
+
+        await fetch(`${import.meta.env.VITE_API_URL}/upload-profile`, {
+          method: "POST",
+          body: formData,
+        });
+      } catch (error) {
+        console.log("Upload backend belum tersedia", error);
+      }
+    } catch (error) {
+      console.log("Take photo error:", error);
+    }
+  };
+useEffect(() => {
+
+  const fetchProfile = async () => {
+
+    try {
+
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/profile`
+      );
+
+      const data =
+        await response.json();
+
+      console.log(
+        "PROFILE:",
+        data
+      );
+
+      setUser(data);
+
+    } catch (error) {
+
+      console.log(
+        "PROFILE ERROR:",
+        error
+      );
+
+    }
+
+  };
+
+  fetchProfile();
+
+}, []);
+useEffect(() => {
+
+  const fetchActivity = async () => {
+
+    try {
+
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/profile/activity-summary`
+      );
+      const data =
+        await response.json();
+
+      console.log(
+        "ACTIVITY:",
+        data
+      );
+
+      setActivity({
+
+        lastMonitoring:
+          data.lastMonitoring,
+
+        totalDrowsy:
+          data.totalDrowsy,
+
+        totalDuration:
+          data.averageDuration,
+      });
+
+    } catch (error) {
+
+      console.log(
+        "ACTIVITY ERROR:",
+        error
+      );
+
+    }
+
+  };
+
+  fetchActivity();
+
+}, []);
+
+  return (
+    <div className="min-h-screen bg-[#F5F7FB]">
+      <div className="w-full max-w-5xl mx-auto px-4 sm:px-5 md:px-8 pt-20 md:pt-28 pb-6">
+        {/* HEADER */}
+        <div className="mb-5">
+          <h1 className="text-2xl sm:text-sm sm:text-lg md:text-3xl md:text-5xl font-bold text-[#0F172A]">Profil Saya</h1>
+
+          <p className="text-xs md:text-lg text-gray-500 mt-3">
+            Dashboard &gt; Profil Saya
+          </p>
+        </div>
+
+        {/* PROFILE CARD */}
+        <div className="bg-white rounded-2xl shadow-sm border p-4 sm:p-5 md:p-8 flex flex-row items-center gap-4 sm:gap-6 md:gap-10">
+          {/* PHOTO */}
+          <div className="relative flex flex-col items-center">
+            {/* FOTO */}
+            {user?.photo ? (
+              <img
+                src={user.photo}
+                alt="profile"
+                className="w-20 h-20 sm:w-24 sm:h-24 md:w-36 md:h-36 rounded-full object-cover border-4 border-gray-100"
+              />
+            ) : (
+              <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-36 md:h-36 rounded-full bg-gray-100 flex items-center justify-center">
+                <CircleUserRound
+                  size={32}
+                  className="text-[#5B2C83]"
+                  strokeWidth={1.5}
+                />
+              </div>
+            )}
+
+            {/* EDIT BUTTON */}
+            <button
+              onClick={() => setIsEditOpen((prev) => !prev)}
+              className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-2 px-3 md:px-5 py-1 text-[10px] sm:text-xs md:text-sm rounded-full bg-white border shadow-md hover:bg-gray-50 font-medium transition flex items-center gap-2"
+            >
+              📷 Edit
+            </button>
+
+            {/* POPUP */}
+            {isEditOpen && (
+              <div className="absolute top-[240px] left-1/2 -translate-x-1/2 bg-white shadow-xl rounded-2xl border overflow-hidden w-64 z-50">
+                {/* CAMERA */}
+                <button
+                  type="button"
+                  onClick={openCamera}
+                  className="w-full text-left flex items-center gap-3 px-5 py-4 hover:bg-gray-50 text-lg"
+                >
+                  <>
+                    <Camera size={22} />
+                    Ambil Foto
+                  </>
+                </button>
+
+                {/* FOLDER */}
+                <label
+                  htmlFor="photoUpload"
+                  className="flex items-center gap-3 px-5 py-4 hover:bg-gray-50 cursor-pointer text-lg"
+                >
+                  <>
+                    <ImagePlus size={22} />
+                    Upload Foto
+                  </>
+                </label>
+              </div>
+            )}
+
+            {/* INPUT FOLDER */}
+            <input
+              id="photoUpload"
+              type="file"
+              accept="image/*"
+              onChange={handlePhotoChange}
+              className="hidden"
+            />
+          </div>
+
+          {/* USER INFO */}
+          <div>
+            <h2 className="text-lg sm:text-2xl md:text-4xl font-bold text-[#0F172A] text-center md:text-left">
+              {user?.name || "Nama User"}
+            </h2>
+
+            <p className="text-xs sm:text-sm md:text-xl text-gray-500 mt-1 md:mt-4 text-center md:text-left break-all">
+              {user?.email || "email@gmail.com"}
+            </p>
+          </div>
+        </div>
+
+        {/* ACTIVITY CARD */}
+        <div className="bg-white rounded-2xl shadow-sm border p-4 sm:p-5 md:p-7 mt-4">
+          <div>
+            <h2 className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-6">
+              Aktivitas 30 Hari Terakhir
+            </h2>
+
+            <p className="text-gray-500 mt-2 text-sm md:text-lg">
+              Ringkasan aktivitas Anda selama 30 hari terakhir.
+            </p>
+          </div>
+
+          <div className="mt-4 space-y-3">
+            {/* MONITORING */}
+            <div className="flex items-start justify-between gap-3 sm:gap-6 border-b pb-4 md:pb-6">
+              <div className="flex items-center gap-3 sm:gap-4 md:gap-5">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 rounded-full bg-blue-50 flex items-center justify-center text-sm sm:text-xl md:text-3xl">
+                  📅
+                </div>
+
+                <div>
+                  <h3 className="text-sm sm:text-base md:text-xl font-semibold text-[#0F172A]">
+                    Monitoring Terakhir
+                  </h3>
+
+                  <p className="text-[11px] sm:text-xs md:text-lg text-gray-500 mt-1">
+                    Waktu terakhir sistem memantau aktivitas Anda.
+                  </p>
+                </div>
+              </div>
+
+              <p className="text-xs sm:text-sm md:text-xl font-semibold text-[#0F172A] text-right min-w-[85px] md:min-w-[140px] leading-tight">
+                {activity.lastMonitoring}
+              </p>
+            </div>
+
+            {/* DROWSY */}
+            <div className="flex items-start justify-between gap-3 sm:gap-6 border-b pb-4 md:pb-6">
+              <div className="flex items-center gap-3 sm:gap-4 md:gap-5">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 rounded-full bg-red-50 flex items-center justify-center text-sm sm:text-xl md:text-3xl">
+                  ⚠️
+                </div>
+
+                <div>
+                  <h3 className="text-sm md:text-2xl font-semibold text-[#0F172A]">
+                    Total Deteksi (30 Hari Terakhir)
+                  </h3>
+
+                  <p className="text-[11px] sm:text-xs md:text-lg text-gray-500 mt-1">
+                    Jumlah total deteksi kantuk dalam 30 hari terakhir.
+                  </p>
+                </div>
+              </div>
+
+              <p className="text-xs sm:text-sm md:text-xl font-semibold text-[#0F172A] text-right min-w-[85px] md:min-w-[140px] leading-tight">
+                {activity.totalDrowsy} kali
+              </p>
+            </div>
+
+            {/* DURATION */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3 sm:gap-4 md:gap-5">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 rounded-full bg-green-50 flex items-center justify-center text-sm sm:text-xl md:text-3xl">
+                  ⏱️
+                </div>
+
+                <div>
+                  <h3 className="text-sm sm:text-base md:text-2xl font-semibold text-[#0F172A]">
+                    Durasi Rata-Rata Perjalanan
+                  </h3>
+
+                  <p className="text-[11px] sm:text-xs md:text-lg text-gray-500 mt-1">
+                    Rata-rata durasi setiap perjalanan Anda.
+                  </p>
+                </div>
+              </div>
+
+              <p className="text-xs sm:text-sm md:text-xl font-semibold text-[#0F172A] text-right min-w-[85px] md:min-w-[140px] leading-tight">
+                {activity.totalDuration}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-10 bg-blue-50 rounded-2xl px-4 md:px-6 py-4 md:py-5 text-blue-600 text-sm md:text-lg">
+            ⓘ Data dihitung dari aktivitas Anda selama 30 hari terakhir.
+          </div>
+        </div>
+      </div>
+
+      {/* CAMERA MODAL */}
+      {isCameraOpen && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[9999]">
+          <div className="bg-white rounded-2xl p-6 w-[500px]">
+            <video
+              ref={videoRef}
+              autoPlay
+              muted
+              playsInline
+              className="w-full rounded-2xl bg-black"
+            />
+
+            <canvas ref={canvasRef} className="hidden" />
+
+            <div className="flex gap-4 mt-5">
+              <button
+                onClick={takePhoto}
+                className="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-xl font-semibold"
+              >
+                Ambil Foto
+              </button>
+
+              <button
+                onClick={closeCamera}
+                className="flex-1 bg-gray-200 hover:bg-gray-300 py-3 rounded-xl font-semibold"
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
