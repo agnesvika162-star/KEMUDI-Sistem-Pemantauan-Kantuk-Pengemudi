@@ -1,21 +1,19 @@
+
 import toast from "react-hot-toast";
 import LoginInput from "../components/LoginInput";
 
 import { useNavigate } from "react-router-dom";
+import { putAccessToken } from "../utils/auth";
 import { useState } from "react";
 
 export default function LoginPage() {
-
   const navigate = useNavigate();
 
   const [errorMessage, setErrorMessage] = useState("");
 
   const showErrorModal = (message) => {
-
     setErrorMessage(message);
-
   };
-
 
   // =====================================
   // HANDLE LOGIN
@@ -50,9 +48,7 @@ export default function LoginPage() {
       // LOGIN FAILED
       // =====================================
       if (!res.ok) {
-        showErrorModal(
-          data.detail || "Login gagal"
-        );
+        showErrorModal("Informasi login tidak valid");
 
         return;
       }
@@ -65,7 +61,7 @@ export default function LoginPage() {
       // =====================================
       // SAVE LOGIN TOKEN
       // =====================================
-      localStorage.setItem("accessToken", "login-success");
+      putAccessToken(data.access_token);
 
       console.log("USER SAVED:", data.user);
 
@@ -78,14 +74,12 @@ export default function LoginPage() {
       // REFRESH APP
       // =====================================
       setTimeout(() => {
-        window.location.href = "/";
+        window.location.reload();
       }, 1500);
     } catch (err) {
       console.error("LOGIN ERROR:", err);
 
-      showErrorModal(
-        "Terjadi kesalahan koneksi"
-    );
+      showErrorModal("Terjadi kesalahan koneksi");
     }
   };
 
@@ -130,30 +124,24 @@ export default function LoginPage() {
         </div>
       </div>
       {/* ERROR MODAL */}
-{errorMessage && (
-  <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-    
-    <div className="bg-white w-[90%] max-w-sm rounded-2xl p-6 shadow-2xl">
+      {errorMessage && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white w-[90%] max-w-sm rounded-2xl p-6 shadow-2xl">
+            <h2 className="text-lg font-semibold text-gray-800 mb-3">
+              Login Gagal
+            </h2>
 
-      <h2 className="text-lg font-semibold text-gray-800 mb-3">
-        Login Gagal
-      </h2>
+            <p className="text-sm text-gray-600 mb-6">{errorMessage}</p>
 
-      <p className="text-sm text-gray-600 mb-6">
-        {errorMessage}
-      </p>
-
-      <button
-        onClick={() => setErrorMessage("")}
-        className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-xl transition"
-      >
-        OK
-      </button>
-
-    </div>
-
-  </div>
-)}
+            <button
+              onClick={() => setErrorMessage("")}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-xl transition"
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

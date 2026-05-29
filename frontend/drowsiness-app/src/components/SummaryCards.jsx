@@ -1,4 +1,6 @@
-"use client";
+summary 
+
+("use client");
 
 import { useState, useEffect } from "react";
 
@@ -41,7 +43,6 @@ export default function SummaryCards() {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
       {/* 🔵 TOTAL */}
       <div className="bg-white rounded-xl p-6 shadow flex items-center gap-4">
         <div className="w-12 h-12 bg-blue-100 flex items-center justify-center rounded-xl text-blue-500 text-xl">
@@ -63,13 +64,10 @@ export default function SummaryCards() {
 
         <div>
           <p className="text-sm text-gray-500">DURASI</p>
-          <h2 className="text-2xl font-bold">
-            {formatTime(duration)}
-          </h2>
+          <h2 className="text-2xl font-bold">{formatTime(duration)}</h2>
           <p className="text-sm text-gray-500">Jam : Menit : Detik</p>
         </div>
       </div>
-
     </div>
   );
 }

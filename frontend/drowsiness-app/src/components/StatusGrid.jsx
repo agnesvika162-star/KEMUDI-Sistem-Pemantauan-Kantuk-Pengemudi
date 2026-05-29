@@ -1,12 +1,16 @@
+
 function StatusGrid({ status, drowsyDuration, warningCount }) {
 
   const formatTime = (seconds) => {
-    if (!seconds) return "00:00";
+    if (!seconds) return "00:00:00";
 
-    const min = Math.floor(seconds / 60);
-    const sec = seconds % 60;
+    const hours = Math.floor(seconds / 3600);
 
-    return `${String(min).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
+    const minutes = Math.floor((seconds % 3600) / 60);
+
+    const secs = seconds % 60;
+
+    return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
   };
 
   const isDrowsy = status === "DROWSY";

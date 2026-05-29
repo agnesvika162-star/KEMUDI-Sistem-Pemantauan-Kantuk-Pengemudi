@@ -1,3 +1,5 @@
+warning 
+
 function WarningBox({ status }) {
   const isDrowsy = status === "DROWSY";
 

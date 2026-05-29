@@ -1,14 +1,11 @@
+
 ("use client");
 
 import toast from "react-hot-toast";
 import { useState } from "react";
 import { useLocation, useNavigate, NavLink } from "react-router-dom";
 import { removeAccessToken } from "../utils/auth";
-import {
-  CircleUserRound,
-  LayoutDashboard,
-  LogOut,
-} from "lucide-react";
+import { CircleUserRound, LayoutDashboard, LogOut } from "lucide-react";
 
 function Navbar({
   user,
@@ -27,27 +24,29 @@ function Navbar({
 
   // 🔥 AUTH PAGE
   const isAuthPage =
-  location.pathname === "/login" || location.pathname === "/register";
+    location.pathname === "/login" || location.pathname === "/register";
   const handleLogout = () => {
-  removeAccessToken();
-  localStorage.removeItem("user");
-  setIsCameraOn?.(false);
-  setIsMuted?.(true);
-  setUser({
-    name: "",
-    email: "",
-    photo: "",
-  });
-  toast.success("Logout berhasil");
-  window.location.href = "/login";
-};
+    removeAccessToken();
+    localStorage.removeItem("user");
+    setIsCameraOn?.(false);
+    setIsMuted?.(true);
+    setUser({
+      name: "",
+      email: "",
+      photo: "",
+    });
+    toast.success("Logout berhasil");
+    window.location.href = "/login";
+  };
 
   return (
     <div className="w-full bg-white border-b fixed top-0 left-0 z-50 shadow-sm">
       <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-8 py-2 md:py-4 flex items-center">
         {/* LEFT */}
         <div className="flex-1 flex flex-col leading-tight">
-          <h1 className="text-base sm:text-lg md:text-3xl font-bold text-blue-600">KEMUDI</h1>
+          <h1 className="text-base sm:text-lg md:text-3xl font-bold text-blue-600">
+            KEMUDI
+          </h1>
 
           <p className="text-[7px] sm:text-[8px] md:text-xs text-gray-500 mt-[2px] leading-tight">
             Sistem Pemantauan Kantuk Pengemudi
@@ -124,17 +123,13 @@ function Navbar({
                 </button>
 
                 {/* SOUND */}
-              <button
-              onClick={() => {
+                <button
+                  onClick={() => {
+                    console.log("MUTE CLICKED");
 
-    console.log(
-      "MUTE CLICKED"
-    );
-
-    setIsMuted((prev) => !prev);
-
-  }}
->
+                    setIsMuted((prev) => !prev);
+                  }}
+                >
                   {isMuted ? "🔇" : "🔊"}
                 </button>
               </>
@@ -155,10 +150,7 @@ function Navbar({
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <CircleUserRound
-                      size={28}
-                      className="text-[#5B2C83]"
-                />
+                    <CircleUserRound size={28} className="text-[#5B2C83]" />
                   )}
                 </button>
 
@@ -182,13 +174,13 @@ function Navbar({
                         <>
                           <LayoutDashboard size={22} />
                           Dashboard
-                      </>
-                    ) : (
-                      <>
-                        <CircleUserRound size={22} />
-                        Profile
-                      </>
-                    )}
+                        </>
+                      ) : (
+                        <>
+                          <CircleUserRound size={22} />
+                          Profile
+                        </>
+                      )}
                     </button>
 
                     {/* LOGOUT */}
@@ -202,8 +194,8 @@ function Navbar({
                     >
                       <>
                         <LogOut size={22} />
-                      Logout
-                    </>
+                        Logout
+                      </>
                     </button>
                   </div>
                 )}

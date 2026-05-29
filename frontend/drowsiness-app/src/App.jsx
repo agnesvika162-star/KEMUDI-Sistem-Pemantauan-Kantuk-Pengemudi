@@ -1,3 +1,4 @@
+
 import { Toaster } from "react-hot-toast";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useState, useEffect } from "react";
@@ -9,6 +10,8 @@ import RegisterPage from "./pages/RegisterPage";
 import ProfilePage from "./pages/ProfilePage";
 
 import Navbar from "./components/Navbar";
+
+import CameraSection from "./components/CameraSection";
 
 import { getAccessToken } from "./utils/auth";
 
@@ -22,68 +25,58 @@ function App() {
   const [warningCount, setWarningCount] = useState(0);
   const [totalDrowsyDuration, setTotalDrowsyDuration] = useState(0);
   const [wasDrowsy, setWasDrowsy] = useState(false);
+  const [status, setStatus] = useState("AWAKE");
+  const [confidence, setConfidence] = useState(0);
   // =====================================
   // USER STATE (GLOBAL)
   // =====================================
   const [user, setUser] = useState({
+    id: null,
     name: "",
     email: "",
     photo: "",
   });
 
   // 🔥 LOGIN STATE
-  const [isLogin, setIsLogin] = useState(null);
+  const [isLogin, setIsLogin] = useState(!!getAccessToken());
 
   // 🔥 CHECK TOKEN
-useEffect(() => {
+  // useEffect(() => {
+  //   const token = localStorage.getItem("accessToken");
 
-  const token =
-    localStorage.getItem("accessToken");
-
-  setIsLogin(!!token);
-
-}, []);
+  //   setIsLogin(!!token);
+  // }, []);
 
   // =====================================
   // LOAD USER
   // =====================================
-useEffect(() => {
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const token = getAccessToken();
 
-  const fetchProfile = async () => {
-
-    try {
-
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/profile`
-      );
-
-      const data =
-        await response.json();
-
-      if (data) {
-
-        setUser(data);
-
-        localStorage.setItem(
-          "user",
-          JSON.stringify(data)
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/profile`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
         );
+        const data = await response.json();
+
+        if (data) {
+          setUser(data);
+
+          localStorage.setItem("user", JSON.stringify(data));
+        }
+      } catch (error) {
+        console.log("PROFILE LOAD ERROR:", error);
       }
+    };
 
-    } catch (error) {
-
-      console.log(
-        "PROFILE LOAD ERROR:",
-        error
-      );
-
-    }
-
-  };
-
-  fetchProfile();
-
-}, []);
+    fetchProfile();
+  }, []);
 
   // ⏳ LOADING
   if (isLogin === null) return null;
@@ -104,6 +97,38 @@ useEffect(() => {
 
       {/* CONTENT */}
       <main className="flex-1 p-2 md:p-4">
+        <CameraSection
+          backgroundMode={true}
+          isCameraOn={isCameraOn}
+          status={status}
+          setStatus={setStatus}
+          setConfidence={setConfidence}
+          monitoringTime={monitoringTime}
+          setMonitoringTime={setMonitoringTime}
+          isMuted={isMuted}
+        />
+        {/* <div className="hidden">
+          <CameraSection
+            isCameraOn={isCameraOn}
+            status={status}
+            setStatus={setStatus}
+            setConfidence={setConfidence}
+            monitoringTime={monitoringTime}
+            setMonitoringTime={setMonitoringTime}
+          />
+        </div> */}
+        {/* <div className="fixed top-0 left-0 w-0 h-0 overflow-hidden opacity-0 pointer-events-none">
+          <CameraSection
+            isCameraOn={isCameraOn}
+            status={status}
+            setStatus={setStatus}
+            setConfidence={setConfidence}
+            monitoringTime={monitoringTime}
+            setMonitoringTime={setMonitoringTime}
+            isMuted={isMuted}
+          />
+        </div> */}
+
         <Routes>
           {/* 🔐 BELUM LOGIN */}
           {!isLogin ? (
@@ -130,15 +155,16 @@ useEffect(() => {
                     setIsMuted={setIsMuted}
                     monitoringTime={monitoringTime}
                     setMonitoringTime={setMonitoringTime}
-
                     warningCount={warningCount}
                     setWarningCount={setWarningCount}
-
                     totalDrowsyDuration={totalDrowsyDuration}
                     setTotalDrowsyDuration={setTotalDrowsyDuration}
-
                     wasDrowsy={wasDrowsy}
                     setWasDrowsy={setWasDrowsy}
+                    status={status}
+                    confidence={confidence}
+                    setStatus={setStatus}
+                    setConfidence={setConfidence}
                   />
                 }
               />
@@ -153,8 +179,8 @@ useEffect(() => {
                     warningCount={warningCount}
                     totalDrowsyDuration={totalDrowsyDuration}
                   />
-              }
-            />
+                }
+              />
 
               {/* PROFILE */}
               <Route
@@ -168,7 +194,7 @@ useEffect(() => {
           )}
         </Routes>
       </main>
-      
+
       <Toaster
         position="top-right"
         toastOptions={{
@@ -178,10 +204,10 @@ useEffect(() => {
             color: "#111",
             borderRadius: "12px",
             padding: "14px 18px",
-          fontSize: "14px",
-        },
-      }}
-    />
+            fontSize: "14px",
+          },
+        }}
+      />
     </div>
   );
 }

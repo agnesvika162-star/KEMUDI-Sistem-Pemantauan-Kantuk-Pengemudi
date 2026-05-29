@@ -1,11 +1,8 @@
+
 import { useEffect, useRef, useState } from "react";
-import {
-  Camera,
-  ImagePlus,
-  UserRound,
-  CircleUserRound,
-} from "lucide-react";
-import Navbar from "../components/Navbar";
+import { Camera, ImagePlus, UserRound, CircleUserRound } from "lucide-react";
+// import Navbar from "../components/Navbar";
+import { getAccessToken } from "../utils/auth";
 
 export default function ProfilePage({ user, setUser }) {
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -21,42 +18,142 @@ export default function ProfilePage({ user, setUser }) {
   // =====================================
   // ACTIVITY STATE
   // =====================================
-const [activity, setActivity] =
-  useState({
-
+  const [activity, setActivity] = useState({
     lastMonitoring: "",
-
     totalDrowsy: 0,
-
-    totalDuration: ""
-});
-
+    totalDuration: "",
+  });
   // =====================================
-  // LOAD ACTIVITY FROM BACKEND
+  // LOAD ACTIVITY FROM DASHBOARD HISTORY
   // =====================================
   useEffect(() => {
-    const fetchActivity = async () => {
+    const fetchDashboardHistory = async () => {
       try {
+        const token = getAccessToken();
+
+        const userData = JSON.parse(localStorage.getItem("user"));
+
+        if (!userData?.id) return;
+
         const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/profile/activity-summary`
+          `${import.meta.env.VITE_API_URL}/dashboard-history/${userData.id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
         );
 
         const data = await response.json();
 
+        if (!Array.isArray(data)) return;
+
+        // =====================================
+        // TOTAL PERINGATAN KANTUK
+        // =====================================
+        const totalDrowsy = data.reduce((sum, item) => {
+          return sum + Number(item.frekuensi || 0);
+        }, 0);
+
+        // =====================================
+        // TOTAL MONITORING
+        // =====================================
+        const totalMonitoringSeconds = data.reduce((sum, item) => {
+          if (!item.monitoring_duration) return sum;
+
+          const parts = item.monitoring_duration.split(":");
+
+          const seconds =
+            Number(parts[0]) * 3600 + Number(parts[1]) * 60 + Number(parts[2]);
+
+          return sum + seconds;
+        }, 0);
+
+        // =====================================
+        // RATA RATA MONITORING
+        // =====================================
+        const averageSeconds =
+          data.length > 0
+            ? Math.floor(totalMonitoringSeconds / data.length)
+            : 0;
+
+        // =====================================
+        // FORMAT HH:MM:SS
+        // =====================================
+        const formatTime = (seconds) => {
+          const h = String(Math.floor(seconds / 3600)).padStart(2, "0");
+
+          const m = String(Math.floor((seconds % 3600) / 60)).padStart(2, "0");
+
+          const s = String(seconds % 60).padStart(2, "0");
+
+          return `${h}:${m}:${s}`;
+        };
+
+        // =====================================
+        // MONITORING TERAKHIR
+        // =====================================
+        const latestMonitoring = data.length > 0 ? data[0].tanggal : "-";
+
+        // =====================================
+        // SET ACTIVITY
+        // =====================================
         setActivity({
-          lastMonitoring: data.lastMonitoring || "-",
+          lastMonitoring: latestMonitoring,
 
-          totalDrowsy: data.totalDrowsy || 0,
+          totalDrowsy,
 
-          totalDuration: data.averageDuration || "-",
+          totalDuration: formatTime(averageSeconds),
         });
       } catch (error) {
-        console.log("Gagal mengambil activity summary", error);
+        console.log("PROFILE ACTIVITY ERROR:", error);
       }
     };
 
-    fetchActivity();
+    // FETCH PERTAMA
+    fetchDashboardHistory();
+
+    // REFRESH TIAP 5 DETIK
+    const interval = setInterval(() => {
+      fetchDashboardHistory();
+    }, 5000);
+
+    // HAPUS INTERVAL SAAT PINDAH HALAMAN
+    return () => clearInterval(interval);
   }, []);
+  // =====================================
+  // LOAD ACTIVITY FROM BACKEND
+  // =====================================
+  // useEffect(() => {
+  //   const fetchActivity = async () => {
+  //     try {
+  //       const token = getAccessToken();
+
+  //       const response = await fetch(
+  //         `${import.meta.env.VITE_API_URL}/profile/activity-summary`,
+  //         {
+  //           headers: {
+  //             Authorization: `Bearer ${token}`,
+  //           },
+  //         },
+  //       );
+
+  //       const data = await response.json();
+
+  //       setActivity({
+  //         lastMonitoring: data.lastMonitoring || "-",
+
+  //         totalDrowsy: data.totalDrowsy || 0,
+
+  //         totalDuration: data.averageDuration || "-",
+  //       });
+  //     } catch (error) {
+  //       console.log("Gagal mengambil activity summary", error);
+  //     }
+  //   };
+
+  //   fetchActivity();
+  // }, []);
 
   // =====================================
   // HANDLE PHOTO UPLOAD
@@ -74,15 +171,12 @@ const [activity, setActivity] =
     // =====================================
     // UPDATE GLOBAL USER STATE
     // =====================================
-const updatedUser = {
-  ...user,
-  photo: previewUrl,
-};
-setUser(updatedUser);
-localStorage.setItem(
-  "user",
-  JSON.stringify(updatedUser)
-);
+    const updatedUser = {
+      ...user,
+      photo: previewUrl,
+    };
+    setUser(updatedUser);
+    localStorage.setItem("user", JSON.stringify(updatedUser));
 
     setIsEditOpen(false);
 
@@ -94,8 +188,15 @@ localStorage.setItem(
 
       formData.append("photo", file);
 
+      const token = getAccessToken();
+
       await fetch(`${import.meta.env.VITE_API_URL}/upload-profile`, {
         method: "POST",
+
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+
         body: formData,
       });
     } catch (error) {
@@ -171,14 +272,11 @@ localStorage.setItem(
       // UPDATE GLOBAL USER STATE
       // =====================================
       const updatedUser = {
-  ...user,
-  photo: imageData,
-};
-setUser(updatedUser);
-localStorage.setItem(
-  "user",
-  JSON.stringify(updatedUser)
-);
+        ...user,
+        photo: imageData,
+      };
+      setUser(updatedUser);
+      localStorage.setItem("user", JSON.stringify(updatedUser));
 
       closeCamera();
 
@@ -194,8 +292,15 @@ localStorage.setItem(
 
         formData.append("photo", blob, "camera-photo.png");
 
+        const token = getAccessToken();
+
         await fetch(`${import.meta.env.VITE_API_URL}/upload-profile`, {
           method: "POST",
+
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+
           body: formData,
         });
       } catch (error) {
@@ -205,130 +310,113 @@ localStorage.setItem(
       console.log("Take photo error:", error);
     }
   };
-useEffect(() => {
+  // useEffect(() => {
+  //   const fetchProfile = async () => {
+  //     try {
+  //       const token = getAccessToken();
 
-  const fetchProfile = async () => {
+  //       const response = await fetch(
+  //         `${import.meta.env.VITE_API_URL}/profile`,
+  //         {
+  //           headers: {
+  //             Authorization: `Bearer ${token}`,
+  //           },
+  //         },
+  //       );
 
-    try {
+  //       const data = await response.json();
 
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/profile`
-      );
+  //       console.log("PROFILE:", data);
 
-      const data =
-        await response.json();
+  //       setUser(data);
+  //     } catch (error) {
+  //       console.log("PROFILE ERROR:", error);
+  //     }
+  //   };
 
-      console.log(
-        "PROFILE:",
-        data
-      );
+  //   fetchProfile();
+  // }, []);
+  // useEffect(() => {
+  //   const fetchActivity = async () => {
+  //     try {
+  //       const token = getAccessToken();
 
-      setUser(data);
+  //       const response = await fetch(
+  //         `${import.meta.env.VITE_API_URL}/profile/activity-summary`,
+  //         {
+  //           headers: {
+  //             Authorization: `Bearer ${token}`,
+  //           },
+  //         },
+  //       );
+  //       const data = await response.json();
 
-    } catch (error) {
+  //       // console.log("ACTIVITY:", data);
 
-      console.log(
-        "PROFILE ERROR:",
-        error
-      );
+  //       // setActivity({
+  //       //   lastMonitoring: data.lastMonitoring,
 
-    }
+  //       //   totalDrowsy: data.totalDrowsy,
 
-  };
+  //       //   totalDuration: data.averageDuration,
+  //       // });
+  //     } catch (error) {
+  //       console.log("ACTIVITY ERROR:", error);
+  //     }
+  //   };
 
-  fetchProfile();
-
-}, []);
-useEffect(() => {
-
-  const fetchActivity = async () => {
-
-    try {
-
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/profile/activity-summary`
-      );
-      const data =
-        await response.json();
-
-      console.log(
-        "ACTIVITY:",
-        data
-      );
-
-      setActivity({
-
-        lastMonitoring:
-          data.lastMonitoring,
-
-        totalDrowsy:
-          data.totalDrowsy,
-
-        totalDuration:
-          data.averageDuration,
-      });
-
-    } catch (error) {
-
-      console.log(
-        "ACTIVITY ERROR:",
-        error
-      );
-
-    }
-
-  };
-
-  fetchActivity();
-
-}, []);
+  //   fetchActivity();
+  // }, []);
 
   return (
     <div className="min-h-screen bg-[#F5F7FB]">
       <div className="w-full max-w-5xl mx-auto px-4 sm:px-5 md:px-8 pt-20 md:pt-28 pb-6">
         {/* HEADER */}
-        <div className="mb-5">
-          <h1 className="text-2xl sm:text-sm sm:text-lg md:text-3xl md:text-5xl font-bold text-[#0F172A]">Profil Saya</h1>
+        <div className="mb-7">
+          <h1 className="text-3xl md:text-4xl font-bold text-[#0F172A] leading-tight tracking-tight">
+            Profil Saya
+          </h1>
 
-          <p className="text-xs md:text-lg text-gray-500 mt-3">
-            Dashboard &gt; Profil Saya
+          <p className="mt-2 text-sm md:text-base">
+            <span className="text-[#2563EB]">Dashboard &gt;</span>{" "}
+            <span className="text-[#2563EB] font-bold">Profil Saya</span>
           </p>
         </div>
 
         {/* PROFILE CARD */}
-        <div className="bg-white rounded-2xl shadow-sm border p-4 sm:p-5 md:p-8 flex flex-row items-center gap-4 sm:gap-6 md:gap-10">
+        {/* <div className="bg-white rounded-3xl shadow-sm border border-gray-100 px-5 sm:px-8 md:px-10 py-6 md:py-8 flex items-center gap-5 md:gap-8 transition">
           {/* PHOTO */}
-          <div className="relative flex flex-col items-center">
-            {/* FOTO */}
-            {user?.photo ? (
+        {/* <div className="relative flex flex-col items-center"> */}
+        {/* FOTO */}
+        {/* {user?.photo ? (
               <img
                 src={user.photo}
                 alt="profile"
-                className="w-20 h-20 sm:w-24 sm:h-24 md:w-36 md:h-36 rounded-full object-cover border-4 border-gray-100"
+                className="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-full object-cover border-4 border-white shadow-lg bg-[#F3F0FF]"
               />
             ) : (
-              <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-36 md:h-36 rounded-full bg-gray-100 flex items-center justify-center">
+              <div className="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-full bg-[#F3F0FF] flex items-center justify-center shadow-lg">
                 <CircleUserRound
-                  size={32}
+                  size={42}
                   className="text-[#5B2C83]"
                   strokeWidth={1.5}
                 />
               </div>
-            )}
+            )} */}
 
-            {/* EDIT BUTTON */}
-            <button
+        {/* EDIT BUTTON */}
+        {/* <button
               onClick={() => setIsEditOpen((prev) => !prev)}
-              className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-2 px-3 md:px-5 py-1 text-[10px] sm:text-xs md:text-sm rounded-full bg-white border shadow-md hover:bg-gray-50 font-medium transition flex items-center gap-2"
+              className="absolute -bottom-3 left-1/2 -translate-x-1/2 px-4 py-2 text-xs rounded-full bg-white shadow-xl border border-gray-100 hover:bg-gray-50 font-semibold transition flex items-center gap-2"
             >
               📷 Edit
-            </button>
+            </button> */}
 
-            {/* POPUP */}
-            {isEditOpen && (
-              <div className="absolute top-[240px] left-1/2 -translate-x-1/2 bg-white shadow-xl rounded-2xl border overflow-hidden w-64 z-50">
-                {/* CAMERA */}
-                <button
+        {/* POPUP */}
+        {/* {isEditOpen && (
+              <div className="absolute top-[240px] left-1/2 -translate-x-1/2 bg-white shadow-xl rounded-2xl border overflow-hidden w-64 z-50"> */}
+        {/* CAMERA */}
+        {/* <button
                   type="button"
                   onClick={openCamera}
                   className="w-full text-left flex items-center gap-3 px-5 py-4 hover:bg-gray-50 text-lg"
@@ -337,10 +425,10 @@ useEffect(() => {
                     <Camera size={22} />
                     Ambil Foto
                   </>
-                </button>
+                </button> */}
 
-                {/* FOLDER */}
-                <label
+        {/* FOLDER */}
+        {/* <label
                   htmlFor="photoUpload"
                   className="flex items-center gap-3 px-5 py-4 hover:bg-gray-50 cursor-pointer text-lg"
                 >
@@ -349,40 +437,135 @@ useEffect(() => {
                     Upload Foto
                   </>
                 </label>
-              </div>
-            )}
+              </div> */}
 
-            {/* INPUT FOLDER */}
-            <input
+        {/* INPUT FOLDER */}
+        {/* <input
               id="photoUpload"
               type="file"
               accept="image/*"
               onChange={handlePhotoChange}
               className="hidden"
             />
-          </div>
+          </div> */}
 
-          {/* USER INFO */}
-          <div>
-            <h2 className="text-lg sm:text-2xl md:text-4xl font-bold text-[#0F172A] text-center md:text-left">
+        {/* USER INFO */}
+        {/* <div className="flex-1 min-w-0">
+            <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold tracking-tight text-[#0F172A] text-center md:text-left leading-tight">
               {user?.name || "Nama User"}
             </h2>
 
-            <p className="text-xs sm:text-sm md:text-xl text-gray-500 mt-1 md:mt-4 text-center md:text-left break-all">
+            <p className="text-sm sm:text-base md:text-xl text-gray-500 mt-2 text-center md:text-left break-all">
               {user?.email || "email@gmail.com"}
             </p>
           </div>
-        </div>
+        </div> */}
+        {/* PROFILE CARD */}
+        <div className="bg-white rounded-[32px] border border-[#DDE7FF] shadow-sm overflow-visible">
+          {/* TOP HEADER */}
+          <div className="h-20 bg-[#D9E8FF] rounded-t-[32px]" />
 
+          {/* CONTENT */}
+          <div className="relative px-6 md:px-10 pb-10 pt-4">
+            {/* AVATAR */}
+            <div className="-mt-10 flex items-end gap-5">
+              {/* LEFT */}
+              <div className="flex items-end gap-5">
+                {/* PHOTO */}
+                <div className="relative">
+                  {user?.photo ? (
+                    <img
+                      src={user.photo}
+                      alt="profile"
+                      className="w-28 h-28 md:w-32 md:h-32 rounded-full object-cover border-4 border-white shadow-lg"
+                    />
+                  ) : (
+                    <div className="w-28 h-28 md:w-32 md:h-32 rounded-full bg-[#F3F7FF] border-4 border-white shadow-lg flex items-center justify-center">
+                      <CircleUserRound
+                        size={52}
+                        className="text-blue-600"
+                        strokeWidth={1.5}
+                      />
+                    </div>
+                  )}
+
+                  {/* ICON EDIT */}
+                  <button
+                    onClick={() => setIsEditOpen((prev) => !prev)}
+                    className="absolute bottom-1 right-1 w-9 h-9 rounded-full bg-[#2563EB] text-white flex items-center justify-center shadow-lg hover:scale-105 transition"
+                  >
+                    ✎
+                  </button>
+
+                  {/* POPUP */}
+                  {isEditOpen && (
+                    <div className="absolute top-[110%] left-1/2 -translate-x-1/2 bg-white shadow-xl rounded-2xl border overflow-hidden w-64 z-50">
+                      <button
+                        type="button"
+                        onClick={openCamera}
+                        className="w-full text-left flex items-center gap-3 px-5 py-4 hover:bg-gray-50 text-lg"
+                      >
+                        <Camera size={22} />
+                        Ambil Foto
+                      </button>
+
+                      <label
+                        htmlFor="photoUpload"
+                        className="flex items-center gap-3 px-5 py-4 hover:bg-gray-50 cursor-pointer text-lg"
+                      >
+                        <ImagePlus size={22} />
+                        Upload Foto
+                      </label>
+                    </div>
+                  )}
+
+                  <input
+                    id="photoUpload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handlePhotoChange}
+                    className="hidden"
+                  />
+                </div>
+
+                {/* USER INFO */}
+                <div className="pb-2 flex flex-col gap-1">
+                  <h2 className="text-2xl md:text-4xl font-bold text-[#0F172A] leading-tight">
+                    {user?.name || "Nama User"}
+                  </h2>
+
+                  <p className="text-gray-500 text-base md:text-xl break-all">
+                    {user?.email || "email@gmail.com"}
+                  </p>
+
+                  {/* BADGE */}
+                  <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#EEF4FF] text-[#4F7CFF] text-sm font-semibold">
+                    ✓ Pengemudi Aktif
+                  </div>
+                </div>
+              </div>
+
+              {/* BUTTON RIGHT */}
+              {/* <div className="md:pb-2">
+                <button
+                  onClick={() => setIsEditOpen((prev) => !prev)}
+                  className="px-5 py-3 rounded-2xl border border-[#D9E8FF] bg-[#F8FBFF] hover:bg-[#EEF4FF] text-[#4F7CFF] font-semibold transition shadow-sm"
+                >
+                  ✏️ Edit Profil
+                </button>
+              </div> */}
+            </div>
+          </div>
+        </div>
         {/* ACTIVITY CARD */}
         <div className="bg-white rounded-2xl shadow-sm border p-4 sm:p-5 md:p-7 mt-4">
-          <div>
-            <h2 className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-6">
-              Aktivitas 30 Hari Terakhir
+          <div className="flex-1 min-w-0">
+            <h2 className="text-lg md:text-2xl font-bold text-[#2563EB] border-b pb-5 tracking-tight">
+              Riwayat Aktivitas
             </h2>
 
-            <p className="text-gray-500 mt-2 text-sm md:text-lg">
-              Ringkasan aktivitas Anda selama 30 hari terakhir.
+            <p className="text-[#94A3B8] mt-2 text-sm md:text-base">
+              Ringkasan aktivitas monitoring Anda
             </p>
           </div>
 
@@ -419,11 +602,11 @@ useEffect(() => {
 
                 <div>
                   <h3 className="text-sm md:text-2xl font-semibold text-[#0F172A]">
-                    Total Deteksi (30 Hari Terakhir)
+                    Total Peringatan Kantuk
                   </h3>
 
                   <p className="text-[11px] sm:text-xs md:text-lg text-gray-500 mt-1">
-                    Jumlah total deteksi kantuk dalam 30 hari terakhir.
+                    Total peringatan kantuk yang terdeteksi sistem
                   </p>
                 </div>
               </div>
@@ -442,11 +625,11 @@ useEffect(() => {
 
                 <div>
                   <h3 className="text-sm sm:text-base md:text-2xl font-semibold text-[#0F172A]">
-                    Durasi Rata-Rata Perjalanan
+                    Rata-Rata Waktu Monitoring
                   </h3>
 
                   <p className="text-[11px] sm:text-xs md:text-lg text-gray-500 mt-1">
-                    Rata-rata durasi setiap perjalanan Anda.
+                    Rata-rata waktu monitoring selama penggunaan sistem.
                   </p>
                 </div>
               </div>
@@ -457,8 +640,8 @@ useEffect(() => {
             </div>
           </div>
 
-          <div className="mt-10 bg-blue-50 rounded-2xl px-4 md:px-6 py-4 md:py-5 text-blue-600 text-sm md:text-lg">
-            ⓘ Data dihitung dari aktivitas Anda selama 30 hari terakhir.
+          <div className="mt-10 bg-[#EFF6FF] border border-[#DBEAFE] rounded-2xl px-4 md:px-6 py-4 md:py-5 text-blue-600 text-sm md:text-lg">
+            ⓘ Data dihitung berdasarkan aktivitas monitoring pengguna
           </div>
         </div>
       </div>

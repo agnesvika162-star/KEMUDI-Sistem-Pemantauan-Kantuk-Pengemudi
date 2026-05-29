@@ -1,3 +1,4 @@
+
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { removeAccessToken } from "../utils/auth";
 
@@ -35,7 +36,6 @@ export default function Sidebar({ isOpen = true, setIsOpen = () => {} }) {
         ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
       >
         <div className="p-4">
-
           {/* LOGO */}
           <div className="mb-6">
             <h1 className="font-bold text-lg">KEMUDI</h1>
@@ -46,7 +46,6 @@ export default function Sidebar({ isOpen = true, setIsOpen = () => {} }) {
 
           {/* MENU */}
           <div className="flex flex-col gap-3">
-
             <Link to="/" className={menuClass("/")}>
               🎥 Live Detection
             </Link>
@@ -58,8 +57,6 @@ export default function Sidebar({ isOpen = true, setIsOpen = () => {} }) {
             <Link to="/history" className={menuClass("/history")}>
               🕒 History
             </Link>
-
-
           </div>
         </div>
 

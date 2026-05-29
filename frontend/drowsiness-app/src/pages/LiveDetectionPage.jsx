@@ -1,9 +1,14 @@
+
 import { useState, useEffect, useRef } from "react";
 import CameraSection from "../components/CameraSection";
 import WarningBox from "../components/WarningBox";
 import StatusGrid from "../components/StatusGrid";
 
 export default function LiveDetectionPage({
+  status,
+  confidence,
+  setStatus,
+  setConfidence,
   drowsinessLevel,
   setDrowsinessLevel,
   isCameraOn,
@@ -21,12 +26,9 @@ export default function LiveDetectionPage({
 
   wasDrowsy,
   setWasDrowsy,
-})
-
-{
-  const [status, setStatus] = useState("AWAKE");
-
-  const [confidence, setConfidence] = useState(0);
+}) {
+  // const [status, setStatus] = useState("AWAKE");
+  // const [confidence, setConfidence] = useState(0);
 
   const alarmRef = useRef(null);
 
@@ -43,7 +45,7 @@ export default function LiveDetectionPage({
     }
 
     return () => clearInterval(interval);
-  }, [status]);
+  }, [status, isCameraOn]);
 
   // =====================================
   // WARNING COUNT
@@ -60,71 +62,88 @@ export default function LiveDetectionPage({
     }
   }, [status, wasDrowsy]);
 
-// =====================================
-// SYNC LOCAL STORAGE
-// =====================================
-useEffect(() => {
+  // =====================================
+  // SYNC LOCAL STORAGE
+  // =====================================
+  // useEffect(() => {
+  //   localStorage.setItem("drowsyCount", warningCount);
 
-  localStorage.setItem(
-    "drowsyCount",
-    warningCount
-  );
+  //   localStorage.setItem("duration", totalDrowsyDuration);
+  // }, [warningCount, totalDrowsyDuration]);
 
-  localStorage.setItem(
-    "duration",
-    totalDrowsyDuration
-  );
+  // =====================================
+  // REALTIME BACKEND SYNC
+  // =====================================
+  useEffect(() => {
+    if (!isCameraOn) return;
 
-}, [warningCount, totalDrowsyDuration]);
+    const user = JSON.parse(localStorage.getItem("user"));
 
-// =====================================
-// AUDIO
-// =====================================
-useEffect(() => {
+    if (!user?.id) return;
 
-  if (!alarmRef.current) return;
+    const interval = setInterval(async () => {
+      try {
+        await fetch(
+          `${import.meta.env.VITE_API_URL}/update-summary/${user.id}`,
+          {
+            method: "POST",
 
-  // 🔇 MUTE = MATIKAN LANGSUNG
-  if (isMuted) {
+            headers: {
+              "Content-Type": "application/json",
+            },
 
-    alarmRef.current.pause();
+            body: JSON.stringify({
+              user_id: user.id,
 
-    alarmRef.current.currentTime = 0;
+              duration: monitoringTime,
 
-    return;
-  }
+              drowsy_count: warningCount,
 
-  // 🔥 DROWSY = PLAY
-  if (status === "DROWSY" && !isMuted) {
+              drowsy_duration: totalDrowsyDuration,
+            }),
+          },
+        );
+      } catch (err) {
+        console.error("Realtime sync error:", err);
+      }
+    }, 5000);
 
-    if (alarmRef.current.paused) {
+    return () => clearInterval(interval);
+  }, [isCameraOn, monitoringTime, warningCount, totalDrowsyDuration]);
 
-      alarmRef.current.loop = true;
+  // =====================================
+  // AUDIO
+  // =====================================
+  useEffect(() => {
+    if (!alarmRef.current) return;
 
-      alarmRef.current
-        .play()
-        .catch((err) => {
+    // 🔇 MUTE = MATIKAN LANGSUNG
+    if (isMuted) {
+      alarmRef.current.pause();
 
-          console.log(
-            "ALARM ERROR:",
-            err
-          );
+      alarmRef.current.currentTime = 0;
 
-        });
+      return;
     }
 
-  }
+    // 🔥 DROWSY = PLAY
+    if (status === "DROWSY" && !isMuted) {
+      if (alarmRef.current.paused) {
+        alarmRef.current.loop = true;
 
-  // 🙂 AWAKE = STOP
-  else {
+        alarmRef.current.play().catch((err) => {
+          console.log("ALARM ERROR:", err);
+        });
+      }
+    }
 
-    alarmRef.current.pause();
+    // 🙂 AWAKE = STOP
+    else {
+      alarmRef.current.pause();
 
-    alarmRef.current.currentTime = 0;
-
-  }
-
-}, [status, isMuted]);
+      alarmRef.current.currentTime = 0;
+    }
+  }, [status, isMuted]);
 
   // =====================================
   // STATUS
@@ -135,20 +154,14 @@ useEffect(() => {
     <div className="min-h-screen bg-[#F5F7FB] overflow-x-hidden overflow-y-auto pb-6 md:pb-10">
       {/* CONTENT */}
       <div className="max-w-7xl mx-auto px-3 md:px-4 pt-24 md:pt-28">
-        {/* CAMERA */}
-        <div className="w-full overflow-hidden rounded-2xl">
-          <CameraSection
-            isCameraOn={isCameraOn}
-            status={status}
-            confidence={confidence}
-            setStatus={setStatus}
-            setConfidence={setConfidence}
-            setDrowsinessLevel={setDrowsinessLevel}
-            drowsinessLevel={drowsinessLevel}
-            monitoringTime={monitoringTime}
-            setMonitoringTime={setMonitoringTime}
-          />
-        </div>
+        <CameraSection
+          isCameraOn={isCameraOn}
+          status={status}
+          setStatus={setStatus}
+          setConfidence={setConfidence}
+          monitoringTime={monitoringTime}
+          setMonitoringTime={setMonitoringTime}
+        />
 
         {/* BOTTOM SECTION */}
         <div className="grid grid-cols-1 lg:grid-cols-[1.3fr_0.7fr] gap-3 md:gap-6 mt-4 md:mt-6 items-start">
