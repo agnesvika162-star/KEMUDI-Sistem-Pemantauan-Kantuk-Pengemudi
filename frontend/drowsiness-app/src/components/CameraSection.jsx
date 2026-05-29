@@ -237,15 +237,30 @@ function CameraSection({
     if (!blob) return;
     const formData = new FormData();
 
-    formData.append("file", blob, "frame.jpg");
-    try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/predict`, {
-        method: "POST",
+        const user = JSON.parse(
+  localStorage.getItem("user")
+);
 
-        credentials: "include",
+        formData.append(
+  "user_id",
+  user.id
+);
 
-        body: formData,
-      });
+        formData.append(
+  "file",
+  blob,
+  "frame.jpg"
+);
+      try {
+
+        const response =
+          await fetch(
+            `${import.meta.env.VITE_API_URL}/predict`,
+            {
+              method: "POST",
+              body: formData,
+            }
+          );
 
       const data = await response.json();
 

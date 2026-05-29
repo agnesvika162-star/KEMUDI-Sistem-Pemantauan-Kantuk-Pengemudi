@@ -1,29 +1,13 @@
-# IMPORT DEPENDENCIES
-
 # FAST API
-from fastapi import (
-    FastAPI,
-    Form,
-    UploadFile,
-    File,
-    Depends,
-    HTTPException,
-    Cookie
-)
+from fastapi import FastAPI, Form, UploadFile, File, Depends, HTTPException, Cookie
 from fastapi.responses import JSONResponse
-from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-# AI
-import numpy as np
-import cv2
-import mediapipe as mp
-from tensorflow.keras.models import load_model
-
 # OTHERS
+from dotenv import load_dotenv
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta, timezone
@@ -37,14 +21,13 @@ import os
 from models import DailySummary, Post, User, TripHistory
 from schemas import PostBase, CreatePost, RegisterRequest, LoginRequest
 from database import engine, SessionLocal, Base, pwd_context, get_db
+from ai import *
+from jwt import *
 
 #===================================================================================================================================
 # LOAD .ENV
 load_dotenv()
 
-MODEL_NAME = os.getenv("MODEL")
-SECRET_KEY = os.getenv("SECRET_KEY")
-ALGORITHM = os.getenv("ALGORITHM")
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 #===================================================================================================================================
@@ -72,316 +55,6 @@ app.add_middleware(
 )
 
 #===================================================================================================================================
-# JWT TOKEN
-def create_access_token(data: dict):
-    to_encode = data.copy()
-    expire = datetime.now(timezone.utc) + timedelta(
-        days=1
-    )
-    to_encode.update({
-        "exp": expire
-    })
-    encoded_jwt = jwt.encode(
-        to_encode,
-        SECRET_KEY,
-        algorithm=ALGORITHM
-    )
-    return encoded_jwt
-
-# AUTH CHECK
-def check_login(access_token: str = Cookie(default=None)):
-    if not access_token:
-        raise HTTPException(
-            status_code=401,
-            detail="Unauthorized"
-        )
-
-    try:
-        payload = jwt.decode(
-            access_token,
-            SECRET_KEY,
-            algorithms=[ALGORITHM]
-        )
-        user_id = payload.get("user_id")
-        if not user_id:
-            raise HTTPException(
-                status_code=401,
-                detail="Invalid token"
-            )
-        return user_id
-
-    except Exception:
-        raise HTTPException(
-            status_code=401,
-            detail="Token invalid"
-        )
-
-#===================================================================================================================================
-# LOAD AI MODEL
-model = load_model(MODEL_NAME)
-
-# MEDIAPIPE
-IMG_SIZE=(96,96)
-
-THRESHOLD=0.5
-
-mp_face=mp.solutions.face_mesh
-
-face_mesh=mp_face.FaceMesh(
-    static_image_mode=True,
-    max_num_faces=1,
-    refine_landmarks=True,
-    min_detection_confidence=0.5
-)
-
-LEFT_EYE=[33,133,160,159,158,157,173]
-RIGHT_EYE=[362,263,387,386,385,384,398]
-
-# EYE BOUNDING BOX
-def get_eye_box(
-    landmarks,
-    eye_indices,
-    w,
-    h
-):
-    xs=[]
-    ys=[]
-
-    for idx in eye_indices:
-        lm=landmarks[idx]
-        xs.append(int(lm.x*w))
-
-        ys.append(int(lm.y*h))
-
-    return (
-        min(xs)-5,
-        min(ys)-5,
-        max(xs)+5,
-        max(ys)+5
-    )
-
-last_status = "AWAKE"
-last_save_time = 0
-
-# AI PREDICT
-def predict_drowsiness(img):
-    global last_status
-
-    try:
-        h,w,_=img.shape
-        rgb=cv2.cvtColor(
-            img,
-            cv2.COLOR_BGR2RGB
-        )
-        results=face_mesh.process(
-            rgb
-        )
-
-        if not results.multi_face_landmarks:
-            return {
-                "status":"NO_EYE",
-                "confidence":0
-            }
-
-        scores=[]
-
-        face_landmarks=(
-            results.multi_face_landmarks[0]
-        )
-
-        lm=face_landmarks.landmark
-
-        boxes=[
-
-            get_eye_box(
-
-                lm,
-
-                LEFT_EYE,
-
-                w,
-
-                h
-
-            ),
-
-            get_eye_box(
-
-                lm,
-
-                RIGHT_EYE,
-
-                w,
-
-                h
-            )
-
-        ]
-
-
-        for (
-
-            x1,
-            y1,
-            x2,
-            y2
-
-        ) in boxes:
-
-
-            x1=max(x1,0)
-
-            y1=max(y1,0)
-
-            x2=min(x2,w)
-
-            y2=min(y2,h)
-
-
-            eye=img[
-                y1:y2,
-                x1:x2
-            ]
-
-
-            if eye.size==0:
-
-                continue
-
-
-            gray=cv2.cvtColor(
-
-                eye,
-
-                cv2.COLOR_BGR2GRAY
-            )
-
-
-            eye=cv2.resize(
-
-                gray,
-
-                IMG_SIZE
-            )
-
-
-            eye=eye.astype(
-                "float32"
-            )/255.0
-
-
-            eye=np.expand_dims(
-
-                eye,
-
-                axis=(0,-1)
-            )
-
-
-            score=float(
-
-                model.predict(
-
-                    eye,
-
-                    verbose=0
-
-                )[0][0]
-            )
-
-
-            scores.append(
-                score
-            )
-
-
-        if len(scores)==0:
-
-            return {
-
-                "status":"NO_EYE",
-
-                "confidence":0
-            }
-
-
-        avg_score=np.mean(
-            scores
-        )
-
-
-        status=(
-
-            "AWAKE"
-
-            if avg_score>
-
-            THRESHOLD
-
-            else
-
-            "DROWSY"
-
-        )
-
-
-        confidence=max(
-
-            avg_score,
-
-            1-avg_score
-
-        )*100
-
-
-        last_status=status
-
-
-        result={
-
-            "status":status,
-
-            "confidence":
-
-            round(
-                float(confidence),
-                2
-            ),
-
-            "value":
-
-            round(
-                float(avg_score),
-                4
-            )
-        }
-
-
-        print(
-            "AI RESULT:",
-            result
-        )
-
-
-        return result
-
-
-    except Exception as e:
-
-        print(
-
-            "PREDICT ERROR:",
-            e
-        )
-
-        return {
-
-            "status":last_status,
-
-            "confidence":0
-        }
-
-#===================================================================================================================================
 # API
 
 # GET /
@@ -395,10 +68,7 @@ def root():
 
 # POST /register
 @app.post("/register")
-def register(
-    request: RegisterRequest,
-    db: Session = Depends(get_db)
-):
+def register(request: RegisterRequest, db: Session = Depends(get_db)):
     try:
         existing_user = db.query(User).filter(
             User.email == request.email
@@ -438,10 +108,7 @@ def register(
 
 # POST /login
 @app.post("/login")
-def login(
-    request: LoginRequest,
-    db: Session = Depends(get_db)
-):
+def login(request: LoginRequest, db: Session = Depends(get_db)):
     try:
         user = db.query(User).filter(
             User.email == request.email
@@ -450,7 +117,7 @@ def login(
         if not user:
             raise HTTPException(
                 status_code=401,
-                detail="Invalid email"
+                detail="Invalid email or password"
             )
 
         valid_password = pwd_context.verify(
@@ -461,7 +128,7 @@ def login(
         if not valid_password:
             raise HTTPException(
                 status_code=401,
-                detail="Invalid password"
+                detail="Invalid email or password"
             )
 
         # CREATE JWT TOKEN
@@ -487,11 +154,13 @@ def login(
         response.set_cookie(
     		key="access_token",
     		value=token,
-		httponly=True,
+		    httponly=True,
     		secure=False,
     		samesite="lax",
     		max_age=86400
-	)
+	    )
+
+        # print(response.body)
 
         return response
 
@@ -517,16 +186,14 @@ def logout():
     )
 
     response.delete_cookie("access_token")
+    response.delete_cookie("user_id")
 
     return response
 
 # POST /start-trip
 @app.post("/start-trip")
-def start_trip(
-    current_user: str = Depends(check_login),
-    user_id: int = Form(...), #??? should get from jwt token
-    db: Session = Depends(get_db)
-):
+def start_trip( current_user: str = Depends(check_login), user_id: int = Form(...), db: Session = Depends(get_db)):
+    #??? user_id should get from jwt token
     trip = TripHistory(
         user_id=user_id,
         start_time=datetime.now()
@@ -541,11 +208,7 @@ def start_trip(
 
 # POST /end-trip/{trip_id}
 @app.post("/end-trip/{trip_id}")
-def end_trip(
-    trip_id: int,
-    current_user: str = Depends(check_login),
-    db: Session = Depends(get_db)
-):
+def end_trip( trip_id: int, current_user: str = Depends(check_login), db: Session = Depends(get_db)):
     trip = db.query(TripHistory).filter(
         TripHistory.id == trip_id
     ).first()
@@ -577,11 +240,7 @@ def end_trip(
 
 # POST /upload-profile
 @app.post("/upload-profile")
-async def upload_profile(
-    photo: UploadFile = File(...),
-    current_user: str = Depends(check_login),
-    db: Session = Depends(get_db)
-):
+async def upload_profile(photo: UploadFile = File(...), current_user: str = Depends(check_login), db: Session = Depends(get_db)):
     try:
         # UNIQUE FILE NAME
         ext = photo.filename.split(".")[-1] #??? validasi ekstensi
@@ -626,10 +285,7 @@ async def upload_profile(
 
 # GET /profile
 @app.get("/profile")
-def get_profile(
-    current_user: str = Depends(check_login),
-    db: Session = Depends(get_db)
-):
+def get_profile(current_user: str = Depends(check_login), db: Session = Depends(get_db)):
     try:
         user = db.query(User).filter(User.id == current_user).first()
         if not user:
@@ -651,10 +307,7 @@ def get_profile(
 
 # GET /profile/activity-summary
 @app.get("/profile/activity-summary")
-def profile_activity_summary(
-    current_user: str = Depends(check_login),
-    db: Session = Depends(get_db)
-):
+def profile_activity_summary(current_user: str = Depends(check_login),db: Session = Depends(get_db)):
     try:
         # TOTAL DROWSY
         total_drowsy = db.query(
@@ -699,12 +352,7 @@ def profile_activity_summary(
 
 # POST /predict
 @app.post("/predict")
-async def predict(
-    user_id: int = Form(...),
-    file: UploadFile = File(...),
-    current_user: str = Depends(check_login),
-    db: Session = Depends(get_db)
-):
+async def predict(file: UploadFile = File(...), user_id: str = Depends(check_login), db: Session = Depends(get_db)):
     
     print("PREDICT HIT")
     print("USER ID:", user_id)
@@ -775,11 +423,7 @@ async def predict(
 
 # PUT /update-summary/{user_id}
 @app.post("/update-summary/{user_id}")
-async def update_summary(
-    user_id: int,
-    data: dict,
-    current_user: str = Depends(check_login)
-):
+async def update_summary(user_id: int, data: dict, current_user: str = Depends(check_login)):
     db = SessionLocal()
 
     try:
@@ -856,9 +500,10 @@ def get_chart_data(user_id: int, current_user: str = Depends(check_login)):
 
     return results
 
-# GET /dashboard-history/{user_id}
-@app.get("/dashboard-history/{user_id}")
-def dashboard_history(user_id: int, current_user: str = Depends(check_login)):
+# GET /dashboard-history
+@app.get("/dashboard-history")
+def dashboard_history(user_id: str = Depends(check_login)):
+    print(user_id)
     db = SessionLocal()
     summaries = (
         db.query(DailySummary)
@@ -890,10 +535,11 @@ def dashboard_history(user_id: int, current_user: str = Depends(check_login)):
             f"{hours:02}:{minutes:02}:{seconds:02}"
         )
         results.append({
-    "tanggal": item.date,
-    "durasi": duration,
-    "frekuensi": item.total_drowsy,
-    "status": status
-})
+            "tanggal": item.date,
+            "durasi": duration,
+            "frekuensi": item.total_drowsy,
+            "status": status
+        })
     db.close()
     return results
+
