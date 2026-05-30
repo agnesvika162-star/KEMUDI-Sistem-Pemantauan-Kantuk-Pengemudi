@@ -1,7 +1,9 @@
 
 import { Toaster } from "react-hot-toast";
-import { Routes, Route, Navigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import Cookies from "js-cookie";
+
 
 import LiveDetectionPage from "./pages/LiveDetectionPage";
 import DashboardPage from "./pages/DashboardPage";
@@ -16,6 +18,8 @@ import CameraSection from "./components/CameraSection";
 import { getAccessToken } from "./utils/auth";
 
 function App() {
+  const location = useLocation(); 
+
   const [drowsinessLevel, setDrowsinessLevel] = useState(20);
 
   const [isCameraOn, setIsCameraOn] = useState(true);
@@ -38,14 +42,17 @@ function App() {
   });
 
   // 🔥 LOGIN STATE
-  const [isLogin, setIsLogin] = useState(!!getAccessToken());
+  const [isLogin, setIsLogin] = useState(null);
 
   // 🔥 CHECK TOKEN
-  // useEffect(() => {
-  //   const token = localStorage.getItem("accessToken");
+useEffect(() => {
 
-  //   setIsLogin(!!token);
-  // }, []);
+  const token =
+    localStorage.getItem("accessToken");
+
+  setIsLogin(!!token);
+
+}, []);
 
   // =====================================
   // LOAD USER
@@ -55,15 +62,12 @@ function App() {
       try {
         const token = getAccessToken();
 
-        const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/profile`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          },
-        );
-        const data = await response.json();
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/profile`
+      );
+
+      const data =
+        await response.json();
 
         if (data) {
           setUser(data);
@@ -79,7 +83,464 @@ function App() {
   }, []);
 
   // ⏳ LOADING
-  if (isLogin === null) return null;
+  // if (isLogin===) return null;
+
+  let videoRef = useRef(null);
+
+  let canvasRef = useRef(null);
+
+  let streamRef = useRef(null);
+
+  let alarmRef = useRef(null);
+
+  
+
+  // =========================================
+  // 🎥 START CAMERA
+  // =========================================
+  useEffect(() => {
+    if(!isLogin){
+      return;
+    }
+
+    if (isCameraOn) {
+
+      // cek browser support
+      if (
+        !navigator.mediaDevices ||
+        !navigator.mediaDevices.getUserMedia
+      ) {
+
+        console.error(
+          "getUserMedia tidak didukung browser"
+        );
+
+        return;
+      }
+
+      navigator.mediaDevices
+        .getUserMedia({
+          video: true
+        })
+
+        .then((stream) => {
+
+          streamRef.current =
+            stream;
+
+          if (
+            videoRef.current
+          ) {
+
+            videoRef.current.srcObject =
+              stream;
+
+            videoRef.current.onloadedmetadata =
+              () => {
+
+                videoRef.current
+                  .play()
+                  .catch(() => {});
+              };
+          }
+        })
+
+        .catch((err) => {
+
+          console.error(
+            "Camera Error:",
+            err
+          );
+        });
+
+    } else {
+
+      // stop camera
+      streamRef.current
+        ?.getTracks()
+        .forEach((track) =>
+          track.stop()
+        );
+
+      if (
+        videoRef.current
+      ) {
+
+        videoRef.current.srcObject =
+          null;
+      }
+
+      // stop alarm
+      // alarmRef.current.pause();
+
+      // alarmRef.current.currentTime = 0;
+    }
+
+  }, [isCameraOn, location.pathname]);
+
+  // =========================================
+  // ⏱️ TIMER
+  // =========================================
+  useEffect(() => {
+    if(!isLogin){
+      return;
+    }
+
+    if (!isCameraOn)
+      return;
+
+    const interval =
+      setInterval(() => {
+
+        setMonitoringTime((prev) => {
+
+          const newValue =
+            prev + 1;
+
+          localStorage.setItem(
+            "duration",
+            newValue
+          );
+
+          return newValue;
+        });
+
+      }, 1000);
+
+    return () =>
+      clearInterval(interval);
+
+  }, [isCameraOn, location.pathname]);
+
+
+  // =========================================
+  // 📸 CAPTURE FRAME
+  // =========================================
+  const captureFrame =
+    () => {
+      if(!isLogin){
+        return;
+      }
+
+      const video =
+        videoRef.current;
+
+      const canvas =
+        canvasRef.current;
+
+      if (
+        !video ||
+        !canvas
+      )
+        return null;
+
+      // video belum ready
+      if (
+        video.readyState !== 4
+      )
+        return null;
+
+      // =========================================
+      // MODEL INPUT 96x96
+      // =========================================
+      canvas.width = 96;
+
+      canvas.height = 96;
+
+      const ctx =
+        canvas.getContext("2d");
+
+      ctx.drawImage(
+        video,
+        0,
+        0,
+        96,
+        96
+      );
+
+      return new Promise(
+        (resolve) => {
+
+          canvas.toBlob(
+            resolve,
+            "image/jpeg",
+            0.5
+          );
+        }
+      );
+    };
+
+  // =========================================
+  // 🌐 SEND TO BACKEND
+  // =========================================
+  const sendToBackend =
+    async () => {
+      if(!isLogin){
+        return;
+      }
+
+      if (!isCameraOn)
+        return;
+
+      const blob =
+        await captureFrame();
+
+      if (!blob)
+        return;
+      const formData =
+  new FormData();
+
+
+        formData.append(
+          "file",
+          blob,
+          "frame.jpg"
+        );
+      try {
+
+        const response =
+          await fetch(
+            `${import.meta.env.VITE_API_URL}/predict`,
+            {
+              method: "POST",
+              body: formData,
+              credentials: "include",
+            }
+          );
+
+        const data =
+          await response.json();
+
+        // console.log(
+        //   "API RESPONSE:",
+        //   data
+        // );
+
+        // invalid response
+        if (
+          !data ||
+          !data.status
+        )
+          return;
+
+        // =========================================
+        // UPDATE UI
+        // =========================================
+        setStatus(
+          data.status
+        );
+
+        setConfidence(
+          data.confidence
+        );
+
+        // =========================================
+        // SAVE STATUS
+        // =========================================
+        const previousStatus =
+          JSON.parse(
+            localStorage.getItem(
+              "status"
+            )
+          );
+
+        localStorage.setItem(
+          "status",
+          JSON.stringify(
+            data.status
+          )
+        );
+
+        // =========================================
+        // COUNT ONLY NEW DROWSY
+        // =========================================
+        if (
+          data.status ===
+            "DROWSY" &&
+          previousStatus !==
+            "DROWSY"
+        ) {
+
+          let count =
+            Number(
+              localStorage.getItem(
+                "drowsyCount"
+              ) || 0
+            );
+
+          count += 1;
+
+          localStorage.setItem(
+            "drowsyCount",
+            count
+          );
+        }
+
+      } catch (err) {
+
+        console.error(
+          "Backend Error:",
+          err
+        );
+      }
+    };
+
+  // =========================================
+  // 🔁 REALTIME LOOP
+  // =========================================
+  useEffect(() => {
+    if(!isLogin){
+      return;
+    }
+
+    if (!isCameraOn)
+      return;
+
+    let isSending =
+      false;
+
+    const interval =
+      setInterval(
+        async () => {
+
+          // prevent spam request
+          if (isSending)
+            return;
+
+          isSending =
+            true;
+
+          await sendToBackend();
+
+          isSending =
+            false;
+
+        },
+        500
+      );
+
+    return () =>
+      clearInterval(interval);
+
+  }, [isCameraOn, location.pathname]);
+
+
+
+   const [status, setStatus] = useState("AWAKE");
+
+  const [confidence, setConfidence] = useState(0);
+
+  // =====================================
+  // DURASI KANTUK
+  // =====================================
+  useEffect(() => {
+    if(!isLogin){
+      return;
+    }
+    let interval;
+
+    if (status === "DROWSY" && isCameraOn) {
+      interval = setInterval(() => {
+        setTotalDrowsyDuration((prev) => prev + 1);
+      }, 1000);
+    }
+
+    return () => clearInterval(interval);
+  }, [status, location.pathname]);
+
+  // =====================================
+  // WARNING COUNT
+  // =====================================
+  useEffect(() => {
+    if(!isLogin){
+      return;
+    }
+    if (status === "DROWSY" && !wasDrowsy) {
+      setWarningCount((prev) => prev + 1);
+
+      setWasDrowsy(true);
+    }
+
+    if (status === "AWAKE") {
+      setWasDrowsy(false);
+    }
+  }, [status, wasDrowsy, location.pathname]);
+
+// =====================================
+// SYNC LOCAL STORAGE
+// =====================================
+useEffect(() => {
+  if(!isLogin){
+      return;
+    }
+
+  localStorage.setItem(
+    "drowsyCount",
+    warningCount
+  );
+
+  localStorage.setItem(
+    "duration",
+    totalDrowsyDuration
+  );
+
+}, [warningCount, totalDrowsyDuration, location.pathname]);
+
+// =====================================
+// AUDIO
+// =====================================
+useEffect(() => {
+  if(!isLogin){
+      return;
+    }
+
+  if (!alarmRef.current) return;
+
+  // 🔇 MUTE = MATIKAN LANGSUNG
+  if (isMuted) {
+
+    alarmRef.current.pause();
+
+    alarmRef.current.currentTime = 0;
+
+    return;
+  }
+
+  console.log(status === "DROWSY" && !isMuted && isCameraOn)
+
+  // 🔥 DROWSY = PLAY
+  if (status === "DROWSY" && !isMuted && isCameraOn) {
+
+    if (alarmRef.current.paused) {
+
+      alarmRef.current.loop = true;
+
+      alarmRef.current
+        .play()
+        .catch((err) => {
+
+          console.log(
+            "ALARM ERROR:",
+            err
+          );
+
+        });
+    }
+
+  }
+
+  // 🙂 AWAKE = STOP
+  else {
+
+    alarmRef.current.pause();
+
+    alarmRef.current.currentTime = 0;
+
+  }
+
+}, [status, isMuted, location.pathname, isCameraOn]);
+
+  
 
   return (
     <div className="flex flex-col min-h-screen overflow-x-hidden bg-[#F5F7FB]">
@@ -147,6 +608,10 @@ function App() {
                 path="/"
                 element={
                   <LiveDetectionPage
+                    videoRef={videoRef}
+                    canvasRef={canvasRef}
+                    status={status}
+                    alarmRef={alarmRef}
                     drowsinessLevel={drowsinessLevel}
                     setDrowsinessLevel={setDrowsinessLevel}
                     isCameraOn={isCameraOn}

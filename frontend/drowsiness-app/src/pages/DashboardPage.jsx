@@ -51,6 +51,7 @@ function DashboardPage({
 
   //     try {
 
+<<<<<<< HEAD
   //       await fetch(`${import.meta.env.VITE_API_URL}/update-summary/${user.id}`, {
   //         method: "POST",
   //         headers: {
@@ -59,13 +60,32 @@ function DashboardPage({
 
   //           body: JSON.stringify({
   //             user_id: user.id,
+=======
+        await fetch(`${import.meta.env.VITE_API_URL}/update-summary/`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            },
+
+            body: JSON.stringify({
+>>>>>>> 4b3c2ba (fix: ready to take videos)
 
   //             duration: deltaDuration,
 
+<<<<<<< HEAD
   //             drowsy_count: deltaCount,
   //           }),
   //         }
   //       );
+=======
+              drowsy_count: deltaCount,
+            }),
+            credentials: "include",
+          }
+        );
+        localStorage.setItem("duration", 0)
+        localStorage.setItem("drowsyCount", 0)
+>>>>>>> 4b3c2ba (fix: ready to take videos)
 
   //     } catch (err) {
 
@@ -88,6 +108,7 @@ function DashboardPage({
   useEffect(() => {
     if (!user?.id) return;
 
+<<<<<<< HEAD
     const fetchHistory = async () => {
       try {
         const response = await fetch(
@@ -96,6 +117,11 @@ function DashboardPage({
             credentials: "include",
           },
         );
+=======
+    fetch(`${import.meta.env.VITE_API_URL}/dashboard-history`, {
+      credentials: "include",
+    })
+>>>>>>> 4b3c2ba (fix: ready to take videos)
 
         const data = await response.json();
 

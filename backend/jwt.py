@@ -36,7 +36,7 @@ def create_access_token(data: dict):
 
 # AUTH CHECK
 def check_login(access_token: str = Cookie(default=None)):
-    print(access_token)
+    # print(access_token)
     if not access_token:
         raise HTTPException(
             status_code=401,

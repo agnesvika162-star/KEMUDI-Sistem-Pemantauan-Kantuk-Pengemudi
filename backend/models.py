@@ -8,7 +8,9 @@ from sqlalchemy import (
     TIMESTAMP,
     Float,
     text,
-    DateTime
+    DateTime,
+    func,
+    and_
 )
 
 # =========================================
@@ -39,10 +41,15 @@ class Post(Base):
         nullable=False
     )
 
+    user_id = Column(
+        Integer,
+        nullable=False
+    )
+
     # waktu deteksi dibuat
     created_at = Column(
-        TIMESTAMP(timezone=True),
-        server_default=text("now()")
+        TIMESTAMP, 
+        default=func.now()
     )
 
 

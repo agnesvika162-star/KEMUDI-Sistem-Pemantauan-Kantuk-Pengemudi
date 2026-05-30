@@ -2,15 +2,17 @@
 import { useRef, useEffect, useState } from "react";
 
 function CameraSection({
+<<<<<<< HEAD
   backgroundMode = false,
   isCameraOn,
+=======
+  videoRef,
+  canvasRef,
+>>>>>>> 4b3c2ba (fix: ready to take videos)
   status,
-  setStatus,
-  setConfidence,
-  isMuted,
-  monitoringTime,
-  setMonitoringTime,
+  monitoringTime
 }) {
+<<<<<<< HEAD
   const videoRef = useRef(null);
 
   const canvasRef = useRef(null);
@@ -183,6 +185,12 @@ function CameraSection({
   }, [backgroundMode, isCameraOn]);
 
   // =========================================
+=======
+  const [seconds, setSeconds] =
+    useState(0);
+
+  // =========================================
+>>>>>>> 4b3c2ba (fix: ready to take videos)
   // 🕒 FORMAT TIME
   // =========================================
   const formatTime = () => {
@@ -198,6 +206,7 @@ function CameraSection({
     return `${hours}:${minutes}:${seconds}`;
   };
   // =========================================
+<<<<<<< HEAD
   // 📸 CAPTURE FRAME
   // =========================================
   const captureFrame = () => {
@@ -321,6 +330,8 @@ function CameraSection({
   }, [isCameraOn]);
 
   // =========================================
+=======
+>>>>>>> 4b3c2ba (fix: ready to take videos)
   // 🎨 UI
   // =========================================
   if (backgroundMode) {

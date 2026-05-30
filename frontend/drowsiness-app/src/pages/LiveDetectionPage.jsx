@@ -5,10 +5,17 @@ import WarningBox from "../components/WarningBox";
 import StatusGrid from "../components/StatusGrid";
 
 export default function LiveDetectionPage({
+<<<<<<< HEAD
   status,
   confidence,
   setStatus,
   setConfidence,
+=======
+  videoRef,
+  canvasRef,
+  status,
+  alarmRef,
+>>>>>>> 4b3c2ba (fix: ready to take videos)
   drowsinessLevel,
   setDrowsinessLevel,
   isCameraOn,
@@ -26,6 +33,7 @@ export default function LiveDetectionPage({
 
   wasDrowsy,
   setWasDrowsy,
+<<<<<<< HEAD
 }) {
   // const [status, setStatus] = useState("AWAKE");
   // const [confidence, setConfidence] = useState(0);
@@ -145,6 +153,12 @@ export default function LiveDetectionPage({
     }
   }, [status, isMuted]);
 
+=======
+})
+
+{
+ 
+>>>>>>> 4b3c2ba (fix: ready to take videos)
   // =====================================
   // STATUS
   // =====================================
@@ -154,6 +168,7 @@ export default function LiveDetectionPage({
     <div className="min-h-screen bg-[#F5F7FB] overflow-x-hidden overflow-y-auto pb-6 md:pb-10">
       {/* CONTENT */}
       <div className="max-w-7xl mx-auto px-3 md:px-4 pt-24 md:pt-28">
+<<<<<<< HEAD
         <CameraSection
           isCameraOn={isCameraOn}
           status={status}
@@ -162,6 +177,17 @@ export default function LiveDetectionPage({
           monitoringTime={monitoringTime}
           setMonitoringTime={setMonitoringTime}
         />
+=======
+        {/* CAMERA */}
+        <div className="w-full overflow-hidden rounded-2xl">
+          <CameraSection
+            videoRef={videoRef}
+            canvasRef={canvasRef}
+            status={status}
+            monitoringTime={monitoringTime}
+          />
+        </div>
+>>>>>>> 4b3c2ba (fix: ready to take videos)
 
         {/* BOTTOM SECTION */}
         <div className="grid grid-cols-1 lg:grid-cols-[1.3fr_0.7fr] gap-3 md:gap-6 mt-4 md:mt-6 items-start">

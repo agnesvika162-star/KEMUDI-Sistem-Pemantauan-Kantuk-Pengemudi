@@ -58,6 +58,7 @@ export default function ChartSection() {
   const svgWrapRef = useRef(null);
 
   useEffect(() => {
+<<<<<<< HEAD
     if (!user?.id) return;
     const token = getAccessToken();
     fetch(
@@ -68,6 +69,11 @@ export default function ChartSection() {
       },
     }
   )
+=======
+    fetch(`${import.meta.env.VITE_API_URL}/dashboard-history`,{
+      credentials: "include",
+    })
+>>>>>>> 4b3c2ba (fix: ready to take videos)
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data)) {

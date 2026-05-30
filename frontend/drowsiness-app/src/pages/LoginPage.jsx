@@ -32,9 +32,9 @@ export default function LoginPage() {
 
         body: JSON.stringify({
           email,
-
           password,
         }),
+        credentials: 'include'
       });
 
       // =====================================

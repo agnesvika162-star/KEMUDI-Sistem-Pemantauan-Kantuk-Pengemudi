@@ -6,11 +6,17 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
+# AI
+import numpy as np
+import cv2
+import mediapipe as mp
+from tensorflow.keras.models import load_model
+
 # OTHERS
 from dotenv import load_dotenv
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from uuid import uuid4
 import time
 import shutil
@@ -154,7 +160,7 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
         response.set_cookie(
     		key="access_token",
     		value=token,
-		    httponly=True,
+		httponly=True,
     		secure=False,
     		samesite="lax",
     		max_age=86400
@@ -236,7 +242,6 @@ def end_trip( trip_id: int, current_user: str = Depends(check_login), db: Sessio
         "duration_minutes":
         trip.duration_minutes
     }
-
 
 # POST /upload-profile
 @app.post("/upload-profile")
@@ -386,29 +391,28 @@ async def predict(file: UploadFile = File(...), user_id: str = Depends(check_log
         # =====================================
         # SAVE DROWSY
         # =====================================
-        if (
-            result["status"] == "DROWSY"
-            and current_time - last_save_time > 5
-        ):
+        # if (
+        #     result["status"] == "DROWSY"
+        #     and current_time - last_save_time > 5
+        # ):
 
-            new_data = DetectionData(
-                user_id=user_id,
-                status=result["status"],
+        #     new_data = Post(
+        #         user_id=int(user_id),
+        #         status=result["status"],
+        #         confidence=result["confidence"]
+        #     )
 
-                confidence=result["confidence"]
-            )
+        #     db.add(new_data)
 
-            db.add(new_data)
+        #     db.commit()
 
-            db.commit()
+        #     db.refresh(new_data)
 
-            db.refresh(new_data)
+        #     last_save_time = current_time
 
-            last_save_time = current_time
-
-            print(
-                f"DROWSY SAVED | {result['confidence']}%"
-            )
+        #     print(
+        #         f"DROWSY SAVED | {result['confidence']}%"
+        #     )
 
         return result
 
@@ -423,17 +427,20 @@ async def predict(file: UploadFile = File(...), user_id: str = Depends(check_log
 
 # PUT /update-summary/{user_id}
 @app.post("/update-summary/{user_id}")
-async def update_summary(user_id: int, data: dict, current_user: str = Depends(check_login)):
+async def update_summary(
+    user_id: int,
+    data: dict,
+    current_user: str = Depends(check_login)
+):
     db = SessionLocal()
 
     try:
-
-        today = datetime.now().strftime("%d %b %Y")
+        today = date.today()
         duration = data.get("duration", 0)
         drowsy_count = data.get("drowsy_count", 0)
         summary = db.query(DailySummary).filter(
-            DailySummary.date == today,
-            DailySummary.user_id == user_id
+            and_(func.date(DailySummary.created_at) == today,
+            DailySummary.user_id == user_id)
         ).first()
 
         if not summary:
@@ -500,11 +507,11 @@ def get_chart_data(user_id: int, current_user: str = Depends(check_login)):
 
     return results
 
-# GET /dashboard-history
-@app.get("/dashboard-history")
-def dashboard_history(user_id: str = Depends(check_login)):
-    print(user_id)
+# GET /dashboard-history/{user_id}
+@app.get("/dashboard-history/{user_id}")
+def dashboard_history(user_id: int, current_user: str = Depends(check_login)):
     db = SessionLocal()
+    today = date.today()
     summaries = (
         db.query(DailySummary)
         .filter(DailySummary.user_id == user_id)
@@ -512,6 +519,7 @@ def dashboard_history(user_id: str = Depends(check_login)):
         .limit(30)
         .all()
     )
+    # print(summaries)
     results = []
     for item in summaries:
 
@@ -541,5 +549,6 @@ def dashboard_history(user_id: str = Depends(check_login)):
             "status": status
         })
     db.close()
+    # print(results)
     return results
 
