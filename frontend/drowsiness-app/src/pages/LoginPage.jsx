@@ -70,12 +70,14 @@ export default function LoginPage() {
       // =====================================
       toast.success("Login berhasil");
 
+      navigate("/");
+
       // =====================================
       // REFRESH APP
       // =====================================
-      setTimeout(() => {
-        window.location.reload();
-      }, 1500);
+      // setTimeout(() => {
+      //   window.location.reload();
+      // }, 1500);
     } catch (err) {
       console.error("LOGIN ERROR:", err);
 

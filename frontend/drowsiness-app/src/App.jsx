@@ -50,7 +50,6 @@ useEffect(() => {
   // console.log(token);
 
   setIsLogin(!!token);
-
 }, [location.pathname]);
 
   // =====================================

@@ -1,7 +1,7 @@
 
 ("use client");
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import ChartSection from "../components/ChartSection";
 
 function DashboardPage({
@@ -20,8 +20,8 @@ function DashboardPage({
   const perPage = 7;
 
   // 🔥 SIMPAN NILAI SEBELUMNYA
-  // const prevDuration = useRef(0);
-  // const prevCount = useRef(0);
+  const prevDuration = useRef(0);
+  const prevCount = useRef(0);
 
   // =====================================
   // UPDATE SUMMARY

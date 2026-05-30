@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useLocation, useNavigate, NavLink } from "react-router-dom";
 import { removeAccessToken } from "../utils/auth";
 import { CircleUserRound, LayoutDashboard, LogOut } from "lucide-react";
+import Cookies from "js-cookie";
 
 function Navbar({
   user,
@@ -27,7 +28,7 @@ function Navbar({
     location.pathname === "/login" || location.pathname === "/register";
   const handleLogout = () => {
     removeAccessToken();
-    localStorage.removeItem("user");
+    Cookies.remove("access_token");
     setIsCameraOn?.(false);
     setIsMuted?.(true);
     setUser({

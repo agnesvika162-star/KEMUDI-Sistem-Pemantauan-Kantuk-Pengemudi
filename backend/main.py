@@ -420,8 +420,8 @@ async def predict(file: UploadFile = File(...), user_id: str = Depends(check_log
         )
 
 # PUT /update-summary/{user_id}
-@app.post("/update-summary/{user_id}")
-async def update_summary(user_id: int, data: dict, current_user: str = Depends(check_login)):
+@app.put("/update-summary")
+async def update_summary(user_id: str = Depends(check_login)):
     db = SessionLocal()
 
     try:
