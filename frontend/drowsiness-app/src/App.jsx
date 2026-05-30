@@ -426,10 +426,6 @@ useEffect(() => {
 
 
 
-   const [status, setStatus] = useState("AWAKE");
-
-  const [confidence, setConfidence] = useState(0);
-
   // =====================================
   // DURASI KANTUK
   // =====================================
