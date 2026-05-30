@@ -6,12 +6,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-# AI
-import numpy as np
-import cv2
-import mediapipe as mp
-from tensorflow.keras.models import load_model
-
 # OTHERS
 from dotenv import load_dotenv
 from pydantic import BaseModel
@@ -160,7 +154,7 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
         response.set_cookie(
     		key="access_token",
     		value=token,
-		httponly=True,
+		    httponly=False,
     		secure=False,
     		samesite="lax",
     		max_age=86400
@@ -427,11 +421,7 @@ async def predict(file: UploadFile = File(...), user_id: str = Depends(check_log
 
 # PUT /update-summary/{user_id}
 @app.post("/update-summary/{user_id}")
-async def update_summary(
-    user_id: int,
-    data: dict,
-    current_user: str = Depends(check_login)
-):
+async def update_summary(user_id: int, data: dict, current_user: str = Depends(check_login)):
     db = SessionLocal()
 
     try:
@@ -507,9 +497,10 @@ def get_chart_data(user_id: int, current_user: str = Depends(check_login)):
 
     return results
 
-# GET /dashboard-history/{user_id}
-@app.get("/dashboard-history/{user_id}")
-def dashboard_history(user_id: int, current_user: str = Depends(check_login)):
+# GET /dashboard-history
+@app.get("/dashboard-history")
+def dashboard_history(user_id: str = Depends(check_login)):
+    print(user_id)
     db = SessionLocal()
     today = date.today()
     summaries = (

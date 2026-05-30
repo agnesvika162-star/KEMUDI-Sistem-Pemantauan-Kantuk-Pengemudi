@@ -2,172 +2,15 @@
 import { useRef, useEffect, useState } from "react";
 
 function CameraSection({
-<<<<<<< HEAD
   backgroundMode = false,
   isCameraOn,
-=======
   videoRef,
   canvasRef,
->>>>>>> 4b3c2ba (fix: ready to take videos)
   status,
-  monitoringTime
+  monitoringTime,
+  setMonitoringTime
 }) {
-<<<<<<< HEAD
-  const videoRef = useRef(null);
-
-  const canvasRef = useRef(null);
-
-  const streamRef = useRef(null);
   const [cameraAlert, setCameraAlert] = useState("");
-
-  // 🔥 ALARM
-  // const alarmRef = useRef(
-  //   new Audio("/alarm.mp3")
-  // );
-
-  // const [seconds, setSeconds] =
-  //   useState(0);
-
-  // =========================================
-  // 🔥 SET ALARM LOOP
-  // =========================================
-  // useEffect(() => {
-
-  //   alarmRef.current.loop = true;
-
-  // }, []);
-
-  // =========================================
-  // 🔥 PLAY / STOP ALARM
-  // =========================================
-  // useEffect(() => {
-
-  //   // mute aktif
-  //   if (isMuted) {
-
-  //     alarmRef.current.pause();
-
-  //     alarmRef.current.currentTime = 0;
-
-  //     return;
-  //   }
-
-  //   // status drowsy
-  //   if (
-  //     status === "DROWSY" &&
-  //     alarmRef.current.paused
-  //   ) {
-
-  //     alarmRef.current
-  //       .play()
-  //       .catch((err) => {
-
-  //         console.log(
-  //           "Audio blocked:",
-  //           err
-  //         );
-  //       });
-
-  //   } else if (
-  //     status === "AWAKE"
-  //   ) {
-
-  //     alarmRef.current.pause();
-
-  //     alarmRef.current.currentTime = 0;
-  //   }
-
-  // }, [status, isMuted]);
-
-  // =========================================
-  // 🎥 START CAMERA
-  // =========================================
-  useEffect(() => {
-    if (isCameraOn) {
-      // cek browser support
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        console.error("getUserMedia tidak didukung browser");
-
-        return;
-      }
-
-      navigator.mediaDevices
-        .getUserMedia({
-          video: true,
-        })
-
-        .then((stream) => {
-          setCameraAlert("");
-          streamRef.current = stream;
-
-          if (videoRef.current) {
-            videoRef.current.srcObject = stream;
-
-            videoRef.current.onloadedmetadata = () => {
-              videoRef.current.play().catch(() => {});
-            };
-          }
-        })
-
-        .catch((err) => {
-          console.error("Camera Error:", err);
-
-          // ❌ izin ditolak
-          if (err.name === "NotAllowedError") {
-            setCameraAlert("Akses kamera belum diizinkan");
-          }
-
-          // ❌ kamera error
-          else {
-            setCameraAlert("Kamera mengalami gangguan");
-          }
-        });
-    } else {
-      setCameraAlert("Kamera dinonaktifkan");
-
-      // stop camera
-      streamRef.current?.getTracks().forEach((track) => track.stop());
-
-      if (videoRef.current) {
-        videoRef.current.srcObject = null;
-      }
-
-      // stop alarm
-      // alarmRef.current.pause();
-
-      // alarmRef.current.currentTime = 0;
-    }
-  }, [isCameraOn]);
-
-  // =========================================
-  // 🔥 RESET LOCAL STORAGE
-  // =========================================
-  // useEffect(() => {
-
-  //   if (isCameraOn) {
-
-  //     localStorage.setItem(
-  //       "duration",
-  //       0
-  //     );
-
-  //     localStorage.setItem(
-  //       "drowsyCount",
-  //       0
-  //     );
-
-  //     localStorage.setItem(
-  //       "status",
-  //       JSON.stringify(
-  //         "AWAKE"
-  //       )
-  //     );
-
-  //     setSeconds(0);
-  //   }
-
-  // }, [isCameraOn]);
-
   // =========================================
   // ⏱️ TIMER
   // =========================================
@@ -185,12 +28,10 @@ function CameraSection({
   }, [backgroundMode, isCameraOn]);
 
   // =========================================
-=======
   const [seconds, setSeconds] =
     useState(0);
 
   // =========================================
->>>>>>> 4b3c2ba (fix: ready to take videos)
   // 🕒 FORMAT TIME
   // =========================================
   const formatTime = () => {
@@ -205,133 +46,8 @@ function CameraSection({
 
     return `${hours}:${minutes}:${seconds}`;
   };
-  // =========================================
-<<<<<<< HEAD
-  // 📸 CAPTURE FRAME
-  // =========================================
-  const captureFrame = () => {
-    const video = videoRef.current;
-
-    const canvas = canvasRef.current;
-
-    if (!video || !canvas) return null;
-
-    // video belum ready
-    if (video.readyState !== 4) return null;
-
-    // =========================================
-    // MODEL INPUT 96x96
-    // =========================================
-    canvas.width = 96;
-
-    canvas.height = 96;
-
-    const ctx = canvas.getContext("2d");
-
-    ctx.drawImage(video, 0, 0, 96, 96);
-
-    return new Promise((resolve) => {
-      canvas.toBlob(resolve, "image/jpeg", 0.5);
-    });
-  };
 
   // =========================================
-  // 🌐 SEND TO BACKEND
-  // =========================================
-  const sendToBackend = async () => {
-    if (!isCameraOn) return;
-
-    const blob = await captureFrame();
-
-    if (!blob) return;
-    const formData = new FormData();
-
-        const user = JSON.parse(
-  localStorage.getItem("user")
-);
-
-        formData.append(
-  "user_id",
-  user.id
-);
-
-        formData.append(
-  "file",
-  blob,
-  "frame.jpg"
-);
-      try {
-
-        const response =
-          await fetch(
-            `${import.meta.env.VITE_API_URL}/predict`,
-            {
-              method: "POST",
-              body: formData,
-            }
-          );
-
-      const data = await response.json();
-
-      console.log("API RESPONSE:", data);
-
-      // invalid response
-      if (!data || !data.status) return;
-
-      // =========================================
-      // UPDATE UI
-      // =========================================
-      setStatus(data.status);
-
-      setConfidence(data.confidence);
-
-      // =========================================
-      // SAVE STATUS
-      // =========================================
-      const previousStatus = JSON.parse(localStorage.getItem("status"));
-
-      localStorage.setItem("status", JSON.stringify(data.status));
-
-      // =========================================
-      // COUNT ONLY NEW DROWSY
-      // =========================================
-      if (data.status === "DROWSY" && previousStatus !== "DROWSY") {
-        let count = Number(localStorage.getItem("drowsyCount") || 0);
-
-        count += 1;
-
-        // localStorage.setItem("drowsyCount", count);
-      }
-    } catch (err) {
-      console.error("Backend Error:", err);
-    }
-  };
-
-  // =========================================
-  // 🔁 REALTIME LOOP
-  // =========================================
-  useEffect(() => {
-    if (!isCameraOn) return;
-
-    let isSending = false;
-
-    const interval = setInterval(async () => {
-      // prevent spam request
-      if (isSending) return;
-
-      isSending = true;
-
-      await sendToBackend();
-
-      isSending = false;
-    }, 300);
-
-    return () => clearInterval(interval);
-  }, [isCameraOn]);
-
-  // =========================================
-=======
->>>>>>> 4b3c2ba (fix: ready to take videos)
   // 🎨 UI
   // =========================================
   if (backgroundMode) {

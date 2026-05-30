@@ -26,41 +26,31 @@ function DashboardPage({
   // =====================================
   // UPDATE SUMMARY
   // =====================================
-  // useEffect(() => {
+  useEffect(() => {
 
-  //   const interval = setInterval(async () => {
+    const fetchData = async () => {
 
-  //     const duration =
-  //       Number(localStorage.getItem("duration") || 0);
+      const duration =
+        Number(localStorage.getItem("duration") || 0);
 
-  //     const count =
-  //       Number(localStorage.getItem("drowsyCount") || 0);
+      const count =
+        Number(localStorage.getItem("drowsyCount") || 0);
 
-  //     const deltaDuration =
-  //       duration - prevDuration.current;
+      const deltaDuration =
+        duration - prevDuration.current;
 
-  //     const deltaCount =
-  //       count - prevCount.current;
+      const deltaCount =
+        count - prevCount.current;
 
-  //     prevDuration.current = duration;
+      prevDuration.current = duration;
 
-  //     prevCount.current = count;
+      prevCount.current = count;
 
-  //     if (deltaDuration <= 0 && deltaCount <= 0)
-  //       return;
+      if (deltaDuration <= 0 && deltaCount <= 0)
+        return;
 
-  //     try {
+      try {
 
-<<<<<<< HEAD
-  //       await fetch(`${import.meta.env.VITE_API_URL}/update-summary/${user.id}`, {
-  //         method: "POST",
-  //         headers: {
-  //           "Content-Type": "application/json",
-  //           },
-
-  //           body: JSON.stringify({
-  //             user_id: user.id,
-=======
         await fetch(`${import.meta.env.VITE_API_URL}/update-summary/`, {
           method: "PUT",
           headers: {
@@ -68,16 +58,9 @@ function DashboardPage({
             },
 
             body: JSON.stringify({
->>>>>>> 4b3c2ba (fix: ready to take videos)
 
-  //             duration: deltaDuration,
+              duration: deltaDuration,
 
-<<<<<<< HEAD
-  //             drowsy_count: deltaCount,
-  //           }),
-  //         }
-  //       );
-=======
               drowsy_count: deltaCount,
             }),
             credentials: "include",
@@ -85,43 +68,41 @@ function DashboardPage({
         );
         localStorage.setItem("duration", 0)
         localStorage.setItem("drowsyCount", 0)
->>>>>>> 4b3c2ba (fix: ready to take videos)
 
-  //     } catch (err) {
+      } catch (err) {
 
-  //       console.error(
-  //         "Update data error:",
-  //         err
-  //       );
+        console.error(
+          "Update data error:",
+          err
+        );
 
-  //     }
+      }
 
+    };
+
+    fetchData();
+  //  const interval = setInterval(() => {
+  //     fetchData();
   //   }, 5000);
 
   //   return () => clearInterval(interval);
 
-  // }, []);
+  }, []);
 
   // =====================================
   // GET HISTORY
   // =====================================
   useEffect(() => {
-    if (!user?.id) return;
+    // if (!user?.id) return;
 
-<<<<<<< HEAD
     const fetchHistory = async () => {
       try {
         const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/dashboard-history/${user.id}`,
+          `${import.meta.env.VITE_API_URL}/dashboard-history`,
           {
             credentials: "include",
           },
         );
-=======
-    fetch(`${import.meta.env.VITE_API_URL}/dashboard-history`, {
-      credentials: "include",
-    })
->>>>>>> 4b3c2ba (fix: ready to take videos)
 
         const data = await response.json();
 
@@ -139,12 +120,12 @@ function DashboardPage({
     fetchHistory();
 
     // REALTIME REFRESH
-    const interval = setInterval(() => {
-      fetchHistory();
-    }, 5000);
+    // const interval = setInterval(() => {
+    //   fetchHistory();
+    // }, 5000);
 
-    return () => clearInterval(interval);
-  }, [user?.id]);
+    // return () => clearInterval(interval);
+  }, []);
 
   // =====================================
   // PAGINATION

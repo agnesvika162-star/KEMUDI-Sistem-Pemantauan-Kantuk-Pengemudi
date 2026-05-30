@@ -58,22 +58,9 @@ export default function ChartSection() {
   const svgWrapRef = useRef(null);
 
   useEffect(() => {
-<<<<<<< HEAD
-    if (!user?.id) return;
-    const token = getAccessToken();
-    fetch(
-      `${import.meta.env.VITE_API_URL}/dashboard-history/${user.id}`, 
-      {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  )
-=======
     fetch(`${import.meta.env.VITE_API_URL}/dashboard-history`,{
       credentials: "include",
     })
->>>>>>> 4b3c2ba (fix: ready to take videos)
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data)) {

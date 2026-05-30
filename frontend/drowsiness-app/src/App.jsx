@@ -42,45 +42,57 @@ function App() {
   });
 
   // 🔥 LOGIN STATE
-  const [isLogin, setIsLogin] = useState(null);
+  const [isLogin, setIsLogin] = useState(false);
 
   // 🔥 CHECK TOKEN
 useEffect(() => {
-
-  const token =
-    localStorage.getItem("accessToken");
+  const token = Cookies.get("access_token");
+  // console.log(token);
 
   setIsLogin(!!token);
 
-}, []);
+}, [location.pathname]);
 
   // =====================================
   // LOAD USER
   // =====================================
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const token = getAccessToken();
+  const fetchProfile = async () => {
+
+    try {
 
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/profile`
+        `${import.meta.env.VITE_API_URL}/profile`,
+        {
+          credentials: "include",
+        }
       );
 
       const data =
         await response.json();
+
+      if (data) {
+
+        setUser(data);
+
+        localStorage.setItem(
+          "user",
+          JSON.stringify(data)
+        );
+        const data = await response.json();
 
         if (data) {
           setUser(data);
 
           localStorage.setItem("user", JSON.stringify(data));
         }
-      } catch (error) {
-        console.log("PROFILE LOAD ERROR:", error);
-      }
-    };
-
+      };
+    } catch (error) {
+      console.log("PROFILE LOAD ERROR:", error);
+    }
+      
     fetchProfile();
-  }, []);
+  }}, []);
 
   // ⏳ LOADING
   // if (isLogin===) return null;
@@ -425,6 +437,10 @@ useEffect(() => {
   }, [isCameraOn, location.pathname]);
 
 
+
+  //  const [status, setStatus] = useState("AWAKE");
+
+  // const [confidence, setConfidence] = useState(0);
 
   // =====================================
   // DURASI KANTUK
